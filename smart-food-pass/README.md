@@ -53,6 +53,7 @@ npx hardhat compile
 - **[Technical Architecture](docs/03-technical-architecture.md)** — System design & stack
 - **[Developer Scope Brief](docs/04-developer-scope-brief.md)** — Sprint modules & delivery
 - **[Venture Narrative](docs/05-venture-narrative.md)** — Market thesis & competitive edge
+- **[Developer Requirements Document (DRD)](docs/06-developer-requirements-document.md)** — Full onboarding and implementation requirements
 
 ## Project Structure
 
