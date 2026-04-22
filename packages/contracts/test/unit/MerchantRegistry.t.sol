@@ -29,7 +29,14 @@ contract MerchantRegistryTest is Test {
 
     function testApprovedMerchantRecognized() public {
         vm.prank(operator);
-        registry.addMerchant(merchantId, legalEntityHash, settlementWallet, settlementRefHash, 566, 0xff);
+        registry.addMerchant(
+            merchantId,
+            legalEntityHash,
+            settlementWallet,
+            settlementRefHash,
+            566,
+            0xff
+        );
 
         assertTrue(registry.isApprovedMerchant(merchantId));
         assertEq(registry.merchantByWallet(settlementWallet), merchantId);
@@ -41,7 +48,14 @@ contract MerchantRegistryTest is Test {
 
     function testSuspendedMerchantBlockedFromApprovedState() public {
         vm.startPrank(operator);
-        registry.addMerchant(merchantId, legalEntityHash, settlementWallet, settlementRefHash, 566, 0xff);
+        registry.addMerchant(
+            merchantId,
+            legalEntityHash,
+            settlementWallet,
+            settlementRefHash,
+            566,
+            0xff
+        );
         registry.suspendMerchant(merchantId);
         vm.stopPrank();
 
@@ -50,7 +64,14 @@ contract MerchantRegistryTest is Test {
 
     function testUpdateSettlementWalletWorks() public {
         vm.startPrank(operator);
-        registry.addMerchant(merchantId, legalEntityHash, settlementWallet, settlementRefHash, 566, 0xff);
+        registry.addMerchant(
+            merchantId,
+            legalEntityHash,
+            settlementWallet,
+            settlementRefHash,
+            566,
+            0xff
+        );
         registry.updateSettlementWallet(merchantId, newSettlementWallet);
         vm.stopPrank();
 
@@ -63,7 +84,14 @@ contract MerchantRegistryTest is Test {
 
     function testUnauthorizedUpdateRejected() public {
         vm.prank(operator);
-        registry.addMerchant(merchantId, legalEntityHash, settlementWallet, settlementRefHash, 566, 0xff);
+        registry.addMerchant(
+            merchantId,
+            legalEntityHash,
+            settlementWallet,
+            settlementRefHash,
+            566,
+            0xff
+        );
 
         vm.prank(stranger);
         vm.expectRevert();
