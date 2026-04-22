@@ -1,7 +1,7 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { RoleNavigation } from '../../../components/role-navigation';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001/api';
 
@@ -72,12 +72,11 @@ export default function AdminDashboardPage() {
   return (
     <main className="min-h-screen bg-slate-950 text-white px-6 py-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <p className="text-cyan-300 font-medium">Admin control</p>
-            <h1 className="text-3xl font-bold">Operations dashboard</h1>
-          </div>
-          <Link href="/" className="text-cyan-300 hover:underline">Back home</Link>
+        <RoleNavigation current="admin" />
+
+        <div className="mb-8">
+          <p className="text-cyan-300 font-medium">Admin control</p>
+          <h1 className="text-3xl font-bold">Operations dashboard</h1>
         </div>
 
         {loading && <div className="bg-slate-900 rounded-2xl p-6">Loading admin data...</div>}
