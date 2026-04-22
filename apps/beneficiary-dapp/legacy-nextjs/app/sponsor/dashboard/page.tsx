@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import { api } from '../../../lib/api';
+import { RoleNavigation } from '../../../components/role-navigation';
 
 type SponsorMetrics = {
   passesIssued: number;
@@ -62,12 +62,11 @@ export default function SponsorDashboardPage() {
   return (
     <main className="min-h-screen bg-slate-100 px-6 py-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <p className="text-blue-700 font-medium">Sponsor operations</p>
-            <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
-          </div>
-          <Link href="/" className="text-blue-700 hover:underline">Back home</Link>
+        <RoleNavigation current="sponsor" />
+
+        <div className="mb-8">
+          <p className="text-blue-700 font-medium">Sponsor operations</p>
+          <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
         </div>
 
         {loading && <div className="bg-white rounded-xl p-6 shadow-sm">Loading sponsor dashboard...</div>}
