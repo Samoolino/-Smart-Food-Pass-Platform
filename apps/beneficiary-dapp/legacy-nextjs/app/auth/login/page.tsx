@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { api } from '../../../lib/api';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -15,20 +16,30 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3001/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+      const data: any = await api.login({ email, password });
+      const accessToken = data?.tokens?.accessToken;
+      const refreshToken = data?.tokens?.refreshToken;
+      const role = data?.user?.role;
 
-      if (!response.ok) {
-        throw new Error('Login failed');
+      if (!accessToken) {
+        throw new Error('Access token missing from login response');
       }
 
-      const data = await response.json();
-      // Store token and redirect
-      localStorage.setItem('token', data.accessToken);
-      window.location.href = '/dashboard';
+      localStorage.setItem('token', accessToken);
+      if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+      if (role) localStorage.setItem('role', role);
+
+      if (role === 'merchant') {
+        window.location.href = '/merchant/redeem';
+        return;
+      }
+
+      if (role === 'sponsor') {
+        window.location.href = '/sponsor/dashboard';
+        return;
+      }
+
+      window.location.href = '/';
     } catch (err: any) {
       setError(err.message || 'An error occurred');
     } finally {
@@ -37,18 +48,16 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
       <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800">Smart Food Pass</h1>
-          <p className="text-gray-600 mt-2">Nutrition-Aware Grocery Access</p>
+          <p className="text-gray-600 mt-2">Sponsor and merchant access portal</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
             <input
               type="email"
               value={email}
@@ -60,9 +69,7 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Password
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
             <input
               type="password"
               value={password}
@@ -84,8 +91,10 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-center text-gray-600 mt-6">
-          Don't have an account?{' '}
+        <p className="text-center text-gray-600 mt-6 text-sm">Demo roles: sponsor, merchant, admin, beneficiary</p>
+
+        <p className="text-center text-gray-600 mt-4">
+          Need an account?{' '}
           <Link href="/auth/signup" className="text-blue-600 hover:underline">
             Sign up
           </Link>
