@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BlockchainModule } from '../blockchain/blockchain.module';
 import { Merchant } from '../merchants/entities/merchant.entity';
 import { Product } from '../products/entities/product.entity';
 import { Sponsor } from '../sponsors/entities/sponsor.entity';
@@ -11,6 +12,7 @@ import { PassesService } from './passes.service';
 
 @Module({
   imports: [
+    BlockchainModule,
     TypeOrmModule.forFeature([
       Pass,
       PassTransaction,

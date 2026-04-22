@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { createHash, randomInt } from 'crypto';
 import * as QRCode from 'qrcode';
 import { Repository } from 'typeorm';
+import { BlockchainService } from '../blockchain/blockchain.service';
 import { Merchant } from '../merchants/entities/merchant.entity';
 import { Product } from '../products/entities/product.entity';
 import { Sponsor } from '../sponsors/entities/sponsor.entity';
@@ -35,6 +36,7 @@ export class PassesService {
     private readonly merchantRepository: Repository<Merchant>,
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
+    private readonly blockchainService: BlockchainService,
   ) {}
 
   async createPass(actorUserId: number, dto: CreatePassDto) {
@@ -177,7 +179,7 @@ export class PassesService {
     merchant.totalRedeemed = Number((Number(merchant.totalRedeemed) + Number(dto.amount)).toFixed(2));
     await this.merchantRepository.save(merchant);
 
-    const transaction = await this.passTransactionRepository.save(
+    let transaction = await this.passTransactionRepository.save(
       this.passTransactionRepository.create({
         passId: pass.id,
         merchantId: merchant.id,
@@ -186,6 +188,21 @@ export class PassesService {
         productPurchased: dto.productPurchased || [],
       }),
     );
+
+    try {
+      const chainResult = await this.blockchainService.logRedemption({
+        passId: pass.id,
+        merchantId: merchant.id,
+        amount: Number(dto.amount),
+        transactionId: transaction.id,
+      });
+
+      transaction.blockchainTxHash = chainResult.txHash;
+      transaction = await this.passTransactionRepository.save(transaction);
+    } catch {
+      transaction.blockchainTxHash = null;
+      transaction = await this.passTransactionRepository.save(transaction);
+    }
 
     return {
       ok: true,
@@ -198,6 +215,7 @@ export class PassesService {
         remainingBalance: pass.balance,
         status: transaction.status,
         timestamp: transaction.transactionTimestamp,
+        blockchainTxHash: transaction.blockchainTxHash,
       },
     };
   }
