@@ -1,0 +1,70 @@
+{
+  "contractName": "SmartFoodPass",
+  "abi": [
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        { "indexed": true, "internalType": "uint256", "name": "passId", "type": "uint256" },
+        { "indexed": true, "internalType": "address", "name": "beneficiary", "type": "address" },
+        { "indexed": true, "internalType": "address", "name": "sponsor", "type": "address" },
+        { "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256" }
+      ],
+      "name": "PassIssued",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        { "indexed": true, "internalType": "uint256", "name": "passId", "type": "uint256" },
+        { "indexed": true, "internalType": "address", "name": "merchant", "type": "address" },
+        { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" },
+        { "indexed": false, "internalType": "bytes32", "name": "productHash", "type": "bytes32" }
+      ],
+      "name": "TransactionLogged",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        { "internalType": "address", "name": "_beneficiary", "type": "address" },
+        { "internalType": "uint256", "name": "_value", "type": "uint256" }
+      ],
+      "name": "issuePass",
+      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "uint256", "name": "_passId", "type": "uint256" },
+        { "internalType": "address", "name": "_merchant", "type": "address" },
+        { "internalType": "uint256", "name": "_amount", "type": "uint256" },
+        { "internalType": "bytes32", "name": "_productHash", "type": "bytes32" }
+      ],
+      "name": "logTransaction",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "uint256", "name": "_passId", "type": "uint256" }
+      ],
+      "name": "getPassBalance",
+      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getTransactionCount",
+      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ]
+}
