@@ -9,6 +9,7 @@ import { ProductsModule } from './products/products.module';
 import { SponsorsModule } from './sponsors/sponsors.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { BlockchainModule } from './blockchain/blockchain.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -19,16 +20,18 @@ import { BlockchainModule } from './blockchain/blockchain.module';
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '5432'),
+      port: parseInt(process.env.DB_PORT || '5432', 10),
       username: process.env.DB_USERNAME || 'app_user',
       password: process.env.DB_PASSWORD || 'password',
       database: process.env.DB_NAME || 'smart_food_pass',
+      autoLoadEntities: true,
       entities: ['dist/**/*.entity{.ts,.js}'],
       migrations: ['dist/database/migrations/*{.ts,.js}'],
       migrationsRun: true,
       synchronize: process.env.NODE_ENV === 'development',
       logging: process.env.NODE_ENV === 'development',
     }),
+    HealthModule,
     AuthModule,
     UsersModule,
     PassesModule,
@@ -38,7 +41,5 @@ import { BlockchainModule } from './blockchain/blockchain.module';
     AnalyticsModule,
     BlockchainModule,
   ],
-  controllers: [],
-  providers: [],
 })
 export class AppModule {}
