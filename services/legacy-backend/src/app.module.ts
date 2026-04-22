@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
+import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { PassesModule } from './passes/passes.module';
@@ -40,6 +41,7 @@ import { HealthModule } from './health/health.module';
     SponsorsModule,
     AnalyticsModule,
     BlockchainModule,
+    AdminModule,
   ],
 })
 export class AppModule {}
