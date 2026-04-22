@@ -1,4 +1,4 @@
-import { IsDateString, IsOptional, IsPhoneNumber, IsString, MaxLength } from 'class-validator';
+import { IsDateString, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class UpdateProfileDto {
   @IsOptional()
@@ -12,7 +12,8 @@ export class UpdateProfileDto {
   lastName?: string;
 
   @IsOptional()
-  @IsPhoneNumber()
+  @IsString()
+  @MaxLength(30)
   phone?: string;
 
   @IsOptional()
