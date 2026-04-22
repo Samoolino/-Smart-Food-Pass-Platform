@@ -1,11 +1,15 @@
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
+  });
 
-  // Global validation pipe
+  const logger = new Logger('Bootstrap');
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -14,24 +18,19 @@ async function bootstrap() {
     }),
   );
 
-  // Enable CORS
+  app.useGlobalFilters(new HttpExceptionFilter());
+
   app.enableCors({
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
     credentials: true,
   });
 
-  // Global API prefix
   app.setGlobalPrefix('api');
 
-  // Health check endpoint
-  app.get('/health', () => ({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-  }));
-
-  const port = process.env.PORT || 3001;
+  const port = Number(process.env.PORT || 3001);
   await app.listen(port);
-  console.log(`Smart Food Pass Backend running on http://localhost:${port}/api`);
+
+  logger.log(`Smart Food Pass backend running on http://localhost:${port}/api`);
 }
 
 bootstrap();
