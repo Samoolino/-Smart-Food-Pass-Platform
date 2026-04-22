@@ -14,7 +14,7 @@ contract CompliancePolicy is AccessControl, ICompliancePolicy {
     event ProgramPolicyDisabled(bytes32 indexed programId);
 
     constructor(address admin) {
-        if (admin == address(0)) revert Errors.InvalidAddress();
+        if (admin == address(0)) revert Errors.ZeroAddress();
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(Roles.COMPLIANCE_ROLE, admin);
     }

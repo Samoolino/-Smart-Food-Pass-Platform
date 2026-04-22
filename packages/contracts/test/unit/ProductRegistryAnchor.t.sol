@@ -46,7 +46,7 @@ contract ProductRegistryAnchorTest is Test {
         assertFalse(registry.validateProduct(productId));
 
         DataTypes.ProductAnchor memory anchor = registry.getProductAnchor(productId);
-        assertEq(uint256(anchor.status), uint256(DataTypes.ProductStatus.DEACTIVATED));
+        assertEq(uint256(anchor.status), uint256(DataTypes.ProductStatus.INACTIVE));
     }
 
     function testUpdateVersionWorks() public {

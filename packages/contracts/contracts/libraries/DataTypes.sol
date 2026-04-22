@@ -26,7 +26,7 @@ library DataTypes {
     enum ProductStatus {
         NONE,
         ACTIVE,
-        DEACTIVATED
+        INACTIVE
     }
 
     enum CadenceType {

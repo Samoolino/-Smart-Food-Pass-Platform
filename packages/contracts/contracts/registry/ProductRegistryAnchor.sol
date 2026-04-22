@@ -15,7 +15,7 @@ contract ProductRegistryAnchor is AccessControl, IProductRegistryAnchor {
     event ProductDeactivated(bytes32 indexed productId);
 
     constructor(address admin) {
-        if (admin == address(0)) revert Errors.InvalidAddress();
+        if (admin == address(0)) revert Errors.ZeroAddress();
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(Roles.REGISTRY_ROLE, admin);
     }
@@ -29,8 +29,8 @@ contract ProductRegistryAnchor is AccessControl, IProductRegistryAnchor {
         uint256 effectiveFrom,
         uint256 effectiveTo
     ) external onlyRole(Roles.REGISTRY_ROLE) {
-        if (productId == bytes32(0) || versionHash == bytes32(0)) revert Errors.InvalidProduct();
-        if (productAnchors[productId].productId != bytes32(0)) revert Errors.InvalidProduct();
+        if (productId == bytes32(0) || versionHash == bytes32(0)) revert Errors.InvalidPolicy();
+        if (productAnchors[productId].productId != bytes32(0)) revert Errors.InvalidPolicy();
         if (effectiveTo != 0 && effectiveTo < effectiveFrom) revert Errors.InvalidPolicy();
 
         productAnchors[productId] = DataTypes.ProductAnchor({
@@ -40,9 +40,9 @@ contract ProductRegistryAnchor is AccessControl, IProductRegistryAnchor {
             nutritionClass: nutritionClass,
             complianceCode: complianceCode,
             status: DataTypes.ProductStatus.ACTIVE,
-            effectiveFrom: uint64(effectiveFrom),
-            effectiveTo: uint64(effectiveTo),
-            lastUpdatedAt: uint64(block.timestamp)
+            effectiveFrom: effectiveFrom,
+            effectiveTo: effectiveTo,
+            lastUpdatedAt: block.timestamp
         });
 
         emit ProductRegistered(productId, versionHash);
@@ -55,17 +55,17 @@ contract ProductRegistryAnchor is AccessControl, IProductRegistryAnchor {
         uint256 effectiveFrom,
         uint256 effectiveTo
     ) external onlyRole(Roles.REGISTRY_ROLE) {
-        if (newVersionHash == bytes32(0)) revert Errors.InvalidProduct();
+        if (newVersionHash == bytes32(0)) revert Errors.InvalidPolicy();
 
         DataTypes.ProductAnchor storage anchor = productAnchors[productId];
-        if (anchor.productId == bytes32(0)) revert Errors.InvalidProduct();
+        if (anchor.productId == bytes32(0)) revert Errors.InvalidPolicy();
         if (effectiveTo != 0 && effectiveTo < effectiveFrom) revert Errors.InvalidPolicy();
 
         anchor.versionHash = newVersionHash;
         anchor.complianceCode = complianceCode;
-        anchor.effectiveFrom = uint64(effectiveFrom);
-        anchor.effectiveTo = uint64(effectiveTo);
-        anchor.lastUpdatedAt = uint64(block.timestamp);
+        anchor.effectiveFrom = effectiveFrom;
+        anchor.effectiveTo = effectiveTo;
+        anchor.lastUpdatedAt = block.timestamp;
         anchor.status = DataTypes.ProductStatus.ACTIVE;
 
         emit ProductVersionUpdated(productId, newVersionHash);
@@ -73,10 +73,10 @@ contract ProductRegistryAnchor is AccessControl, IProductRegistryAnchor {
 
     function deactivateProduct(bytes32 productId) external onlyRole(Roles.REGISTRY_ROLE) {
         DataTypes.ProductAnchor storage anchor = productAnchors[productId];
-        if (anchor.productId == bytes32(0)) revert Errors.InvalidProduct();
+        if (anchor.productId == bytes32(0)) revert Errors.InvalidPolicy();
 
-        anchor.status = DataTypes.ProductStatus.DEACTIVATED;
-        anchor.lastUpdatedAt = uint64(block.timestamp);
+        anchor.status = DataTypes.ProductStatus.INACTIVE;
+        anchor.lastUpdatedAt = block.timestamp;
 
         emit ProductDeactivated(productId);
     }
