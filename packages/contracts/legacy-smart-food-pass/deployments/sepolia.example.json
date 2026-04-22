@@ -1,0 +1,10 @@
+{
+  "contractName": "SmartFoodPass",
+  "network": "sepolia",
+  "chainId": 11155111,
+  "contractAddress": "0x0000000000000000000000000000000000000000",
+  "vaultAddress": "0x0000000000000000000000000000000000000000",
+  "deployer": "0x0000000000000000000000000000000000000000",
+  "deploymentTime": "2026-04-22T00:00:00.000Z",
+  "abiPath": "./abi/SmartFoodPass.json"
+}
