@@ -26,6 +26,9 @@ export class Sponsor {
   @Column({ name: 'contact_person', nullable: true })
   contactPerson?: string;
 
+  @Column({ name: 'wallet_address', nullable: true })
+  walletAddress?: string;
+
   @Column({ name: 'total_funded', type: 'decimal', precision: 15, scale: 2, default: 0 })
   totalFunded: number;
 
