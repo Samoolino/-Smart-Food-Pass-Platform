@@ -12,6 +12,7 @@ describe('BlockchainService', () => {
   let passRepository: any;
   let passTransactionRepository: any;
   let blockchainReconciliationRepository: any;
+  let reconciliationQb: any;
 
   beforeEach(() => {
     userRepository = {
@@ -40,10 +41,25 @@ describe('BlockchainService', () => {
       find: jest.fn(),
     };
 
+    reconciliationQb = {
+      orderBy: jest.fn().mockReturnThis(),
+      skip: jest.fn().mockReturnThis(),
+      take: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getManyAndCount: jest.fn().mockResolvedValue([
+        [
+          { id: 100, eventType: BlockchainReconciliationEventType.PASS_ISSUANCE, status: 'recorded' },
+          { id: 101, eventType: BlockchainReconciliationEventType.PASS_REDEMPTION, status: 'pending' },
+        ],
+        2,
+      ]),
+    };
+
     blockchainReconciliationRepository = {
       find: jest.fn(),
       create: jest.fn((value) => value),
       save: jest.fn(async (value) => value),
+      createQueryBuilder: jest.fn(() => reconciliationQb),
     };
 
     service = new BlockchainService(
@@ -141,6 +157,25 @@ describe('BlockchainService', () => {
     expect(result.transactions.total).toBe(3);
     expect(result.reconciliationEvents.issuanceEvents).toBe(1);
     expect(result.reconciliationEvents.redemptionEvents).toBe(2);
+  });
+
+  it('returns paginated reconciliation history with filters', async () => {
+    const result = await service.getReconciliationHistory({
+      page: 2,
+      limit: 5,
+      eventType: 'pass_redemption',
+      passId: 10,
+      status: 'pending',
+      mode: 'simulated-bridge',
+    });
+
+    expect(blockchainReconciliationRepository.createQueryBuilder).toHaveBeenCalledWith('event');
+    expect(reconciliationQb.skip).toHaveBeenCalledWith(5);
+    expect(reconciliationQb.take).toHaveBeenCalledWith(5);
+    expect(reconciliationQb.andWhere).toHaveBeenCalledTimes(4);
+    expect(result.pagination).toEqual({ page: 2, limit: 5, total: 2, totalPages: 1 });
+    expect(result.filters.eventType).toBe('pass_redemption');
+    expect(result.items).toHaveLength(2);
   });
 
   it('creates reconciliation events explicitly', async () => {
