@@ -8,6 +8,7 @@ import { Pass } from '../passes/entities/pass.entity';
 import { PassTransaction } from '../passes/entities/pass-transaction.entity';
 import { Sponsor } from '../sponsors/entities/sponsor.entity';
 import { User } from '../users/entities/user.entity';
+import { ReconciliationHistoryQueryDto } from './dto/reconciliation-history-query.dto';
 import { UpdateWalletMappingDto } from './dto/update-wallet-mapping.dto';
 import {
   BlockchainReconciliationEvent,
@@ -141,6 +142,61 @@ export class BlockchainService {
         issuanceEvents: issuanceEvents.length,
         redemptionEvents: redemptionEvents.length,
         recent: events.slice(0, 5),
+      },
+    };
+  }
+
+  async getReconciliationHistory(query: ReconciliationHistoryQueryDto) {
+    const page = query.page || 1;
+    const limit = query.limit || 20;
+
+    const qb = this.blockchainReconciliationRepository
+      .createQueryBuilder('event')
+      .orderBy('event.createdAt', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    if (query.eventType) {
+      qb.andWhere('event.eventType = :eventType', { eventType: query.eventType });
+    }
+
+    if (query.passId) {
+      qb.andWhere('event.passId = :passId', { passId: query.passId });
+    }
+
+    if (query.transactionId) {
+      qb.andWhere('event.transactionId = :transactionId', { transactionId: query.transactionId });
+    }
+
+    if (query.status) {
+      qb.andWhere('event.status = :status', { status: query.status });
+    }
+
+    if (query.txHash) {
+      qb.andWhere('event.txHash = :txHash', { txHash: query.txHash });
+    }
+
+    if (query.mode) {
+      qb.andWhere('event.mode = :mode', { mode: query.mode });
+    }
+
+    const [items, total] = await qb.getManyAndCount();
+
+    return {
+      items,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / limit)),
+      },
+      filters: {
+        eventType: query.eventType || null,
+        passId: query.passId || null,
+        transactionId: query.transactionId || null,
+        status: query.status || null,
+        txHash: query.txHash || null,
+        mode: query.mode || null,
       },
     };
   }
