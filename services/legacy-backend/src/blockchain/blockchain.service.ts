@@ -118,6 +118,39 @@ export class BlockchainService {
     };
   }
 
+  async issuePass(input: {
+    passId: number;
+    sponsorId: number;
+    beneficiaryUserId: number;
+    value: number;
+    sponsorWalletAddress?: string | null;
+    beneficiaryWalletAddress?: string | null;
+  }) {
+    const beneficiaryAddress = input.beneficiaryWalletAddress || ZeroAddress;
+
+    if (this.contract && this.signer && beneficiaryAddress !== ZeroAddress) {
+      try {
+        const tx = await this.contract.issuePass(
+          beneficiaryAddress,
+          BigInt(Math.round(input.value)),
+        );
+
+        return {
+          success: true,
+          txHash: tx.hash,
+          network: this.rpcUrl,
+          mode: 'live-rpc',
+          sponsorWalletAddress: input.sponsorWalletAddress || null,
+          beneficiaryWalletAddress: beneficiaryAddress,
+        };
+      } catch {
+        return this.simulateIssuance(input, 'rpc-fallback');
+      }
+    }
+
+    return this.simulateIssuance(input, 'simulated-bridge');
+  }
+
   async logRedemption(input: {
     passId: number;
     merchantId: number;
@@ -141,6 +174,7 @@ export class BlockchainService {
           txHash: tx.hash,
           network: this.rpcUrl,
           mode: 'live-rpc',
+          merchantWalletAddress: merchantAddress,
         };
       } catch {
         return this.simulateRedemption(input, 'rpc-fallback');
@@ -176,8 +210,25 @@ export class BlockchainService {
     };
   }
 
+  private simulateIssuance(
+    input: { passId: number; sponsorId: number; beneficiaryUserId: number; value: number; sponsorWalletAddress?: string | null; beneficiaryWalletAddress?: string | null },
+    mode: string,
+  ) {
+    const seed = `${input.passId}:${input.sponsorId}:${input.beneficiaryUserId}:${input.value}:${Date.now()}`;
+    const txHash = `0x${createHash('sha256').update(seed).digest('hex')}`;
+
+    return {
+      success: true,
+      txHash,
+      network: this.rpcUrl || 'local-simulated',
+      mode,
+      sponsorWalletAddress: input.sponsorWalletAddress || null,
+      beneficiaryWalletAddress: input.beneficiaryWalletAddress || null,
+    };
+  }
+
   private simulateRedemption(
-    input: { passId: number; merchantId: number; amount: number; transactionId: number },
+    input: { passId: number; merchantId: number; amount: number; transactionId: number; merchantWalletAddress?: string },
     mode: string,
   ) {
     const seed = `${input.passId}:${input.merchantId}:${input.amount}:${input.transactionId}:${Date.now()}`;
@@ -188,6 +239,7 @@ export class BlockchainService {
       txHash,
       network: this.rpcUrl || 'local-simulated',
       mode,
+      merchantWalletAddress: input.merchantWalletAddress || null,
     };
   }
 }
