@@ -78,9 +78,24 @@ export class PassesService {
 
     const savedPass = await this.passRepository.save(pass);
 
+    let issuanceChain: any = null;
+    try {
+      issuanceChain = await this.blockchainService.issuePass({
+        passId: savedPass.id,
+        sponsorId: sponsor.id,
+        beneficiaryUserId: beneficiary.id,
+        value: Number(dto.value),
+        sponsorWalletAddress: sponsor.walletAddress || null,
+        beneficiaryWalletAddress: beneficiary.walletAddress || null,
+      });
+    } catch {
+      issuanceChain = null;
+    }
+
     return {
       ...savedPass,
       qrPayload: this.buildQrPayload(savedPass),
+      issuanceChain,
     };
   }
 
@@ -195,6 +210,7 @@ export class PassesService {
         merchantId: merchant.id,
         amount: Number(dto.amount),
         transactionId: transaction.id,
+        merchantWalletAddress: merchant.walletAddress || undefined,
       });
 
       transaction.blockchainTxHash = chainResult.txHash;
@@ -211,6 +227,7 @@ export class PassesService {
         passId: pass.id,
         passIdUnique: pass.passIdUnique,
         merchantId: merchant.id,
+        merchantWalletAddress: merchant.walletAddress || null,
         amount: transaction.amount,
         remainingBalance: pass.balance,
         status: transaction.status,
