@@ -1,6 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import { createHash } from 'crypto';
 import { Contract, JsonRpcProvider, Wallet, ZeroAddress, keccak256, toUtf8Bytes } from 'ethers';
+import { Repository } from 'typeorm';
+import { Merchant } from '../merchants/entities/merchant.entity';
+import { PassTransaction } from '../passes/entities/pass-transaction.entity';
+import { Sponsor } from '../sponsors/entities/sponsor.entity';
+import { User } from '../users/entities/user.entity';
+import { UpdateWalletMappingDto } from './dto/update-wallet-mapping.dto';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import smartFoodPassArtifact from './abi/smart-food-pass.abi.json';
@@ -20,6 +27,17 @@ export class BlockchainService {
     ? new Contract(this.contractAddress, this.abi, this.signer || this.provider)
     : null;
 
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    @InjectRepository(Sponsor)
+    private readonly sponsorRepository: Repository<Sponsor>,
+    @InjectRepository(Merchant)
+    private readonly merchantRepository: Repository<Merchant>,
+    @InjectRepository(PassTransaction)
+    private readonly passTransactionRepository: Repository<PassTransaction>,
+  ) {}
+
   getContractInfo() {
     return {
       contractName: 'SmartFoodPass',
@@ -31,6 +49,72 @@ export class BlockchainService {
       rpcConfigured: Boolean(this.rpcUrl),
       signerConfigured: Boolean(this.signer),
       liveModeReady: Boolean(this.contract && this.signer),
+    };
+  }
+
+  async updateUserWalletMapping(userId: number, dto: UpdateWalletMappingDto) {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+
+    user.walletAddress = dto.walletAddress.toLowerCase();
+    const saved = await this.userRepository.save(user);
+    const { passwordHash, ...safeUser } = saved;
+    return safeUser;
+  }
+
+  async updateSponsorWalletMapping(sponsorId: number, dto: UpdateWalletMappingDto) {
+    const sponsor = await this.sponsorRepository.findOne({ where: { id: sponsorId } });
+    if (!sponsor) throw new NotFoundException('Sponsor not found');
+
+    sponsor.walletAddress = dto.walletAddress.toLowerCase();
+    return this.sponsorRepository.save(sponsor);
+  }
+
+  async updateMerchantWalletMapping(merchantId: number, dto: UpdateWalletMappingDto) {
+    const merchant = await this.merchantRepository.findOne({ where: { id: merchantId } });
+    if (!merchant) throw new NotFoundException('Merchant not found');
+
+    merchant.walletAddress = dto.walletAddress.toLowerCase();
+    return this.merchantRepository.save(merchant);
+  }
+
+  async getWalletMappingSummary() {
+    const [users, sponsors, merchants] = await Promise.all([
+      this.userRepository.find(),
+      this.sponsorRepository.find(),
+      this.merchantRepository.find(),
+    ]);
+
+    return {
+      users: {
+        total: users.length,
+        mapped: users.filter((item) => Boolean(item.walletAddress)).length,
+        unmapped: users.filter((item) => !item.walletAddress).length,
+      },
+      sponsors: {
+        total: sponsors.length,
+        mapped: sponsors.filter((item) => Boolean(item.walletAddress)).length,
+        unmapped: sponsors.filter((item) => !item.walletAddress).length,
+      },
+      merchants: {
+        total: merchants.length,
+        mapped: merchants.filter((item) => Boolean(item.walletAddress)).length,
+        unmapped: merchants.filter((item) => !item.walletAddress).length,
+      },
+    };
+  }
+
+  async getReconciliationSummary() {
+    const transactions = await this.passTransactionRepository.find();
+
+    return {
+      contract: this.getContractInfo(),
+      transactions: {
+        total: transactions.length,
+        withBlockchainHash: transactions.filter((item) => Boolean(item.blockchainTxHash)).length,
+        pendingHash: transactions.filter((item) => !item.blockchainTxHash).length,
+        liveRpcReady: Boolean(this.contract && this.signer),
+      },
     };
   }
 
