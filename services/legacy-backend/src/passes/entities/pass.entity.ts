@@ -53,6 +53,18 @@ export class Pass {
   @Column({ name: 'product_restrictions', type: 'jsonb', default: [] })
   productRestrictions: number[];
 
+  @Column({ name: 'issuance_blockchain_tx_hash', nullable: true })
+  issuanceBlockchainTxHash?: string;
+
+  @Column({ name: 'issuance_blockchain_network', nullable: true })
+  issuanceBlockchainNetwork?: string;
+
+  @Column({ name: 'issuance_blockchain_mode', nullable: true })
+  issuanceBlockchainMode?: string;
+
+  @Column({ name: 'issued_on_chain_at', type: 'timestamp', nullable: true })
+  issuedOnChainAt?: Date;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

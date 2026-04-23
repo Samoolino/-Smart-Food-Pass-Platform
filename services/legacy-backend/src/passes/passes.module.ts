@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BlockchainModule } from '../blockchain/blockchain.module';
+import { BlockchainReconciliationEvent } from '../blockchain/entities/blockchain-reconciliation.entity';
 import { Merchant } from '../merchants/entities/merchant.entity';
 import { Product } from '../products/entities/product.entity';
 import { Sponsor } from '../sponsors/entities/sponsor.entity';
@@ -20,6 +21,7 @@ import { PassesService } from './passes.service';
       Sponsor,
       Merchant,
       Product,
+      BlockchainReconciliationEvent,
     ]),
   ],
   controllers: [PassesController],

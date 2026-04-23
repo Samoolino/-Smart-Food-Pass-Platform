@@ -4,10 +4,15 @@ import { createHash } from 'crypto';
 import { Contract, JsonRpcProvider, Wallet, ZeroAddress, keccak256, toUtf8Bytes } from 'ethers';
 import { Repository } from 'typeorm';
 import { Merchant } from '../merchants/entities/merchant.entity';
+import { Pass } from '../passes/entities/pass.entity';
 import { PassTransaction } from '../passes/entities/pass-transaction.entity';
 import { Sponsor } from '../sponsors/entities/sponsor.entity';
 import { User } from '../users/entities/user.entity';
 import { UpdateWalletMappingDto } from './dto/update-wallet-mapping.dto';
+import {
+  BlockchainReconciliationEvent,
+  BlockchainReconciliationEventType,
+} from './entities/blockchain-reconciliation.entity';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import smartFoodPassArtifact from './abi/smart-food-pass.abi.json';
@@ -34,8 +39,12 @@ export class BlockchainService {
     private readonly sponsorRepository: Repository<Sponsor>,
     @InjectRepository(Merchant)
     private readonly merchantRepository: Repository<Merchant>,
+    @InjectRepository(Pass)
+    private readonly passRepository: Repository<Pass>,
     @InjectRepository(PassTransaction)
     private readonly passTransactionRepository: Repository<PassTransaction>,
+    @InjectRepository(BlockchainReconciliationEvent)
+    private readonly blockchainReconciliationRepository: Repository<BlockchainReconciliationEvent>,
   ) {}
 
   getContractInfo() {
@@ -105,17 +114,65 @@ export class BlockchainService {
   }
 
   async getReconciliationSummary() {
-    const transactions = await this.passTransactionRepository.find();
+    const [passes, transactions, events] = await Promise.all([
+      this.passRepository.find(),
+      this.passTransactionRepository.find(),
+      this.blockchainReconciliationRepository.find({ order: { createdAt: 'DESC' }, take: 10 }),
+    ]);
+
+    const issuanceEvents = events.filter((item) => item.eventType === BlockchainReconciliationEventType.PASS_ISSUANCE);
+    const redemptionEvents = events.filter((item) => item.eventType === BlockchainReconciliationEventType.PASS_REDEMPTION);
 
     return {
       contract: this.getContractInfo(),
+      issuance: {
+        totalPasses: passes.length,
+        withIssuanceHash: passes.filter((item) => Boolean(item.issuanceBlockchainTxHash)).length,
+        pendingIssuanceHash: passes.filter((item) => !item.issuanceBlockchainTxHash).length,
+      },
       transactions: {
         total: transactions.length,
         withBlockchainHash: transactions.filter((item) => Boolean(item.blockchainTxHash)).length,
         pendingHash: transactions.filter((item) => !item.blockchainTxHash).length,
         liveRpcReady: Boolean(this.contract && this.signer),
       },
+      reconciliationEvents: {
+        total: events.length,
+        issuanceEvents: issuanceEvents.length,
+        redemptionEvents: redemptionEvents.length,
+        recent: events.slice(0, 5),
+      },
     };
+  }
+
+  async createReconciliationEvent(input: {
+    eventType: BlockchainReconciliationEventType;
+    passId?: number;
+    transactionId?: number;
+    txHash?: string | null;
+    network?: string | null;
+    mode?: string | null;
+    status?: string | null;
+    sponsorWalletAddress?: string | null;
+    beneficiaryWalletAddress?: string | null;
+    merchantWalletAddress?: string | null;
+    metadata?: Record<string, any>;
+  }) {
+    const event = this.blockchainReconciliationRepository.create({
+      passId: input.passId,
+      transactionId: input.transactionId,
+      eventType: input.eventType,
+      txHash: input.txHash || null,
+      network: input.network || null,
+      mode: input.mode || null,
+      status: input.status || null,
+      sponsorWalletAddress: input.sponsorWalletAddress || null,
+      beneficiaryWalletAddress: input.beneficiaryWalletAddress || null,
+      merchantWalletAddress: input.merchantWalletAddress || null,
+      metadata: input.metadata || {},
+    });
+
+    return this.blockchainReconciliationRepository.save(event);
   }
 
   async issuePass(input: {
