@@ -1,7 +1,7 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { RoleNavigation } from '../../../components/role-navigation';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001/api';
 
@@ -39,12 +39,11 @@ export default function BeneficiaryPassesPage() {
   return (
     <main className="min-h-screen bg-amber-50 px-6 py-8">
       <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <p className="text-amber-700 font-medium">Beneficiary access</p>
-            <h1 className="text-3xl font-bold text-slate-900">My passes</h1>
-          </div>
-          <Link href="/" className="text-amber-700 hover:underline">Back home</Link>
+        <RoleNavigation current="beneficiary" />
+
+        <div className="mb-8">
+          <p className="text-amber-700 font-medium">Beneficiary access</p>
+          <h1 className="text-3xl font-bold text-slate-900">My passes</h1>
         </div>
 
         {loading && <div className="bg-white rounded-2xl p-6 shadow-sm">Loading passes...</div>}

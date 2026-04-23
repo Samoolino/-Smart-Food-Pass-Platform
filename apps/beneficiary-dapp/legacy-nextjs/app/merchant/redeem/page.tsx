@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { api } from '../../../lib/api';
+import { RoleNavigation } from '../../../components/role-navigation';
 
 export default function MerchantRedeemPage() {
   const [qrCode, setQrCode] = useState('');
@@ -20,7 +20,7 @@ export default function MerchantRedeemPage() {
       try {
         const data = await api.getMerchantTransactions();
         setTransactions(data as any[]);
-      } catch (err) {
+      } catch {
         // leave merchant history empty on first load
       }
     };
@@ -78,12 +78,11 @@ export default function MerchantRedeemPage() {
   return (
     <main className="min-h-screen bg-emerald-50 px-6 py-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <p className="text-emerald-700 font-medium">Merchant operations</p>
-            <h1 className="text-3xl font-bold text-slate-900">Redeem pass</h1>
-          </div>
-          <Link href="/" className="text-emerald-700 hover:underline">Back home</Link>
+        <RoleNavigation current="merchant" />
+
+        <div className="mb-8">
+          <p className="text-emerald-700 font-medium">Merchant operations</p>
+          <h1 className="text-3xl font-bold text-slate-900">Redeem pass</h1>
         </div>
 
         {error && <div className="bg-red-50 text-red-700 rounded-xl p-4 mb-6">{error}</div>}
