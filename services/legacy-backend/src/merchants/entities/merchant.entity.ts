@@ -23,6 +23,9 @@ export class Merchant {
   @Column({ name: 'pos_type', nullable: true })
   posType?: string;
 
+  @Column({ name: 'wallet_address', nullable: true })
+  walletAddress?: string;
+
   @Column({ name: 'commission_rate', type: 'decimal', precision: 5, scale: 2, default: 2.0 })
   commissionRate: number;
 

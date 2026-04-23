@@ -52,6 +52,9 @@ export class User {
   @Column({ name: 'profile_image_url', nullable: true })
   profileImageUrl?: string;
 
+  @Column({ name: 'wallet_address', nullable: true })
+  walletAddress?: string;
+
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
 
