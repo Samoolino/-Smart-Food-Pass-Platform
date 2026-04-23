@@ -7,6 +7,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { createHash, randomInt } from 'crypto';
 import * as QRCode from 'qrcode';
 import { Repository } from 'typeorm';
+import {
+  BlockchainReconciliationEvent,
+  BlockchainReconciliationEventType,
+} from '../blockchain/entities/blockchain-reconciliation.entity';
 import { BlockchainService } from '../blockchain/blockchain.service';
 import { Merchant } from '../merchants/entities/merchant.entity';
 import { Product } from '../products/entities/product.entity';
@@ -36,6 +40,8 @@ export class PassesService {
     private readonly merchantRepository: Repository<Merchant>,
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
+    @InjectRepository(BlockchainReconciliationEvent)
+    private readonly blockchainReconciliationRepository: Repository<BlockchainReconciliationEvent>,
     private readonly blockchainService: BlockchainService,
   ) {}
 
@@ -76,7 +82,7 @@ export class PassesService {
       productRestrictions: dto.productRestrictions || [],
     });
 
-    const savedPass = await this.passRepository.save(pass);
+    let savedPass = await this.passRepository.save(pass);
 
     let issuanceChain: any = null;
     try {
@@ -88,6 +94,30 @@ export class PassesService {
         sponsorWalletAddress: sponsor.walletAddress || null,
         beneficiaryWalletAddress: beneficiary.walletAddress || null,
       });
+
+      savedPass.issuanceBlockchainTxHash = issuanceChain?.txHash || null;
+      savedPass.issuanceBlockchainNetwork = issuanceChain?.network || null;
+      savedPass.issuanceBlockchainMode = issuanceChain?.mode || null;
+      savedPass.issuedOnChainAt = issuanceChain?.txHash ? new Date() : null;
+      savedPass = await this.passRepository.save(savedPass);
+
+      await this.blockchainReconciliationRepository.save(
+        this.blockchainReconciliationRepository.create({
+          passId: savedPass.id,
+          eventType: BlockchainReconciliationEventType.PASS_ISSUANCE,
+          txHash: issuanceChain?.txHash || null,
+          network: issuanceChain?.network || null,
+          mode: issuanceChain?.mode || null,
+          status: issuanceChain?.txHash ? 'recorded' : 'pending',
+          sponsorWalletAddress: issuanceChain?.sponsorWalletAddress || sponsor.walletAddress || null,
+          beneficiaryWalletAddress: issuanceChain?.beneficiaryWalletAddress || beneficiary.walletAddress || null,
+          metadata: {
+            sponsorId: sponsor.id,
+            beneficiaryUserId: beneficiary.id,
+            passValue: dto.value,
+          },
+        }),
+      );
     } catch {
       issuanceChain = null;
     }
@@ -215,6 +245,23 @@ export class PassesService {
 
       transaction.blockchainTxHash = chainResult.txHash;
       transaction = await this.passTransactionRepository.save(transaction);
+
+      await this.blockchainReconciliationRepository.save(
+        this.blockchainReconciliationRepository.create({
+          passId: pass.id,
+          transactionId: transaction.id,
+          eventType: BlockchainReconciliationEventType.PASS_REDEMPTION,
+          txHash: chainResult.txHash,
+          network: chainResult.network || null,
+          mode: chainResult.mode || null,
+          status: chainResult.txHash ? 'recorded' : 'pending',
+          merchantWalletAddress: chainResult.merchantWalletAddress || merchant.walletAddress || null,
+          metadata: {
+            amount: dto.amount,
+            productPurchased: dto.productPurchased || [],
+          },
+        }),
+      );
     } catch {
       transaction.blockchainTxHash = null;
       transaction = await this.passTransactionRepository.save(transaction);
