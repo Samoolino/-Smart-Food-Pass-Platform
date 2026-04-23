@@ -1,4 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
+import {
+  BlockchainReconciliationEventType,
+} from './entities/blockchain-reconciliation.entity';
 import { BlockchainService } from './blockchain.service';
 
 describe('BlockchainService', () => {
@@ -6,7 +9,9 @@ describe('BlockchainService', () => {
   let userRepository: any;
   let sponsorRepository: any;
   let merchantRepository: any;
+  let passRepository: any;
   let passTransactionRepository: any;
+  let blockchainReconciliationRepository: any;
 
   beforeEach(() => {
     userRepository = {
@@ -27,15 +32,27 @@ describe('BlockchainService', () => {
       save: jest.fn(async (value) => value),
     };
 
+    passRepository = {
+      find: jest.fn(),
+    };
+
     passTransactionRepository = {
       find: jest.fn(),
+    };
+
+    blockchainReconciliationRepository = {
+      find: jest.fn(),
+      create: jest.fn((value) => value),
+      save: jest.fn(async (value) => value),
     };
 
     service = new BlockchainService(
       userRepository,
       sponsorRepository,
       merchantRepository,
+      passRepository,
       passTransactionRepository,
+      blockchainReconciliationRepository,
     );
   });
 
@@ -100,22 +117,59 @@ describe('BlockchainService', () => {
     expect(result.merchants).toEqual({ total: 2, mapped: 1, unmapped: 1 });
   });
 
-  it('computes reconciliation summary from transactions', async () => {
+  it('computes richer reconciliation summary from passes, transactions, and events', async () => {
+    passRepository.find.mockResolvedValue([
+      { id: 10, issuanceBlockchainTxHash: '0xissue1' },
+      { id: 11, issuanceBlockchainTxHash: null },
+    ]);
     passTransactionRepository.find.mockResolvedValue([
       { id: 1, blockchainTxHash: '0xabc' },
       { id: 2, blockchainTxHash: null },
       { id: 3, blockchainTxHash: '0xdef' },
     ]);
+    blockchainReconciliationRepository.find.mockResolvedValue([
+      { id: 100, eventType: BlockchainReconciliationEventType.PASS_ISSUANCE, txHash: '0xissue1' },
+      { id: 101, eventType: BlockchainReconciliationEventType.PASS_REDEMPTION, txHash: '0xabc' },
+      { id: 102, eventType: BlockchainReconciliationEventType.PASS_REDEMPTION, txHash: '0xdef' },
+    ]);
 
     const result = await service.getReconciliationSummary();
 
+    expect(result.issuance.totalPasses).toBe(2);
+    expect(result.issuance.withIssuanceHash).toBe(1);
+    expect(result.issuance.pendingIssuanceHash).toBe(1);
     expect(result.transactions.total).toBe(3);
-    expect(result.transactions.withBlockchainHash).toBe(2);
-    expect(result.transactions.pendingHash).toBe(1);
+    expect(result.reconciliationEvents.issuanceEvents).toBe(1);
+    expect(result.reconciliationEvents.redemptionEvents).toBe(2);
   });
 
-  it('falls back to simulated bridge logging when live rpc is not ready', async () => {
-    const result = await service.logRedemption({
+  it('creates reconciliation events explicitly', async () => {
+    const result = await service.createReconciliationEvent({
+      eventType: BlockchainReconciliationEventType.PASS_ISSUANCE,
+      passId: 10,
+      txHash: '0xissue1',
+      network: 'local-simulated',
+      mode: 'simulated-bridge',
+      status: 'recorded',
+      sponsorWalletAddress: '0xsponsor',
+      beneficiaryWalletAddress: '0xbeneficiary',
+      metadata: { passValue: 500 },
+    });
+
+    expect(result.eventType).toBe(BlockchainReconciliationEventType.PASS_ISSUANCE);
+    expect(blockchainReconciliationRepository.save).toHaveBeenCalled();
+  });
+
+  it('falls back to simulated issuance and redemption when live rpc is not ready', async () => {
+    const issuance = await service.issuePass({
+      passId: 10,
+      sponsorId: 7,
+      beneficiaryUserId: 3,
+      value: 500,
+      sponsorWalletAddress: '0xsponsor',
+      beneficiaryWalletAddress: '0xbeneficiary',
+    });
+    const redemption = await service.logRedemption({
       passId: 10,
       merchantId: 8,
       amount: 125,
@@ -123,8 +177,9 @@ describe('BlockchainService', () => {
       merchantWalletAddress: '0x4444444444444444444444444444444444444444',
     });
 
-    expect(result.success).toBe(true);
-    expect(result.txHash.startsWith('0x')).toBe(true);
-    expect(result.mode).toMatch(/simulated|fallback/);
+    expect(issuance.success).toBe(true);
+    expect(issuance.txHash.startsWith('0x')).toBe(true);
+    expect(redemption.success).toBe(true);
+    expect(redemption.txHash.startsWith('0x')).toBe(true);
   });
 });
