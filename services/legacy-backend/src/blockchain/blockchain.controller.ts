@@ -53,6 +53,26 @@ export class BlockchainController {
     return this.blockchainService.updateMerchantWalletMapping(Number(id), dto);
   }
 
+  @Post('issue-pass')
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.SPONSOR)
+  issuePass(
+    @Body('passId') passId: number,
+    @Body('sponsorId') sponsorId: number,
+    @Body('beneficiaryUserId') beneficiaryUserId: number,
+    @Body('value') value: number,
+    @Body('sponsorWalletAddress') sponsorWalletAddress?: string,
+    @Body('beneficiaryWalletAddress') beneficiaryWalletAddress?: string,
+  ) {
+    return this.blockchainService.issuePass({
+      passId: Number(passId),
+      sponsorId: Number(sponsorId),
+      beneficiaryUserId: Number(beneficiaryUserId),
+      value: Number(value),
+      sponsorWalletAddress,
+      beneficiaryWalletAddress,
+    });
+  }
+
   @Post('redeem-pass')
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MERCHANT)
   logRedeemPass(
