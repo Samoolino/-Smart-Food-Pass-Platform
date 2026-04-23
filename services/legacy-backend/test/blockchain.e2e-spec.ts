@@ -21,10 +21,16 @@ describe('BlockchainController (e2e)', () => {
       contract: { contractName: 'SmartFoodPass' },
       transactions: { total: 2, withBlockchainHash: 1, pendingHash: 1, liveRpcReady: false },
     })),
+    getReconciliationHistory: jest.fn(async () => ({
+      items: [{ id: 100, eventType: 'pass_redemption', status: 'pending' }],
+      pagination: { page: 2, limit: 5, total: 1, totalPages: 1 },
+      filters: { eventType: 'pass_redemption', passId: 10, transactionId: null, status: 'pending', txHash: null, mode: 'simulated-bridge' },
+    })),
     updateUserWalletMapping: jest.fn(async (id: number, dto: any) => ({ id, email: 'user@example.com', walletAddress: dto.walletAddress })),
     updateSponsorWalletMapping: jest.fn(async (id: number, dto: any) => ({ id, walletAddress: dto.walletAddress })),
     updateMerchantWalletMapping: jest.fn(async (id: number, dto: any) => ({ id, walletAddress: dto.walletAddress })),
     logRedemption: jest.fn(async (payload: any) => ({ success: true, txHash: '0xabc', mode: 'simulated-bridge', ...payload })),
+    issuePass: jest.fn(async (payload: any) => ({ success: true, txHash: '0xissue', mode: 'simulated-bridge', ...payload })),
   };
 
   beforeAll(async () => {
@@ -67,6 +73,16 @@ describe('BlockchainController (e2e)', () => {
     expect(response.body.transactions.pendingHash).toBe(1);
   });
 
+  it('/api/blockchain/reconciliation/history (GET)', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/blockchain/reconciliation/history?page=2&limit=5&eventType=pass_redemption&passId=10&status=pending&mode=simulated-bridge')
+      .expect(200);
+
+    expect(response.body.pagination.page).toBe(2);
+    expect(response.body.items[0].eventType).toBe('pass_redemption');
+    expect(blockchainService.getReconciliationHistory).toHaveBeenCalled();
+  });
+
   it('/api/blockchain/mappings/users/:id (PUT)', async () => {
     const response = await request(app.getHttpServer())
       .put('/api/blockchain/mappings/users/1')
@@ -92,6 +108,22 @@ describe('BlockchainController (e2e)', () => {
       .expect(200);
 
     expect(response.body.walletAddress).toBe('0x3333333333333333333333333333333333333333');
+  });
+
+  it('/api/blockchain/issue-pass (POST)', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/blockchain/issue-pass')
+      .send({
+        passId: 10,
+        sponsorId: 7,
+        beneficiaryUserId: 3,
+        value: 500,
+        sponsorWalletAddress: '0xsponsor',
+        beneficiaryWalletAddress: '0xbeneficiary',
+      })
+      .expect(201);
+
+    expect(response.body.txHash).toBe('0xissue');
   });
 
   it('/api/blockchain/redeem-pass (POST)', async () => {
