@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../users/entities/user.entity';
+import { ReconciliationHistoryQueryDto } from './dto/reconciliation-history-query.dto';
 import { BlockchainService } from './blockchain.service';
 import { UpdateWalletMappingDto } from './dto/update-wallet-mapping.dto';
 
@@ -33,6 +34,12 @@ export class BlockchainController {
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.SPONSOR)
   getReconciliationSummary() {
     return this.blockchainService.getReconciliationSummary();
+  }
+
+  @Get('reconciliation/history')
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.SPONSOR)
+  getReconciliationHistory(@Query() query: ReconciliationHistoryQueryDto) {
+    return this.blockchainService.getReconciliationHistory(query);
   }
 
   @Put('mappings/users/:id')
