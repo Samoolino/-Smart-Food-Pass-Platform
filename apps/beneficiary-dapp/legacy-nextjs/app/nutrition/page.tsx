@@ -51,12 +51,12 @@ export default function NutritionPage() {
               <h2 className="text-2xl font-semibold text-slate-900 mb-4">Eligibility resolver</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm text-slate-600 block mb-2">User ID</label>
-                  <input value={userId} onChange={(e) => setUserId(e.target.value)} className="w-full rounded-xl border border-slate-300 px-4 py-3" />
+                  <label htmlFor="nutrition-user-id" className="text-sm text-slate-600 block mb-2">User ID</label>
+                  <input id="nutrition-user-id" value={userId} onChange={(e) => setUserId(e.target.value)} className="w-full rounded-xl border border-slate-300 px-4 py-3" />
                 </div>
                 <div>
-                  <label className="text-sm text-slate-600 block mb-2">Pass ID (optional)</label>
-                  <input value={passId} onChange={(e) => setPassId(e.target.value)} className="w-full rounded-xl border border-slate-300 px-4 py-3" />
+                  <label htmlFor="nutrition-pass-id" className="text-sm text-slate-600 block mb-2">Pass ID (optional)</label>
+                  <input id="nutrition-pass-id" value={passId} onChange={(e) => setPassId(e.target.value)} className="w-full rounded-xl border border-slate-300 px-4 py-3" />
                 </div>
                 <button onClick={load} className="rounded-xl bg-slate-900 text-white px-5 py-3 font-medium">Load nutrition access</button>
               </div>
