@@ -1,5 +1,8 @@
-import { Body, Controller, Get, Put, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Put, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { ReviewKycDocumentDto } from './dto/review-kyc-document.dto';
 import { UpdateOnboardingDraftDto } from './dto/update-onboarding-draft.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UsersService } from './users.service';
@@ -27,5 +30,12 @@ export class UsersController {
   @Put('onboarding-draft')
   async updateOnboardingDraft(@Req() req: any, @Body() dto: UpdateOnboardingDraftDto) {
     return this.usersService.updateOnboardingDraft(Number(req.user.sub), dto);
+  }
+
+  @Put(':userId/onboarding-draft/review')
+  @UseGuards(RolesGuard)
+  @Roles('admin', 'super_admin')
+  async reviewOnboardingKyc(@Req() req: any, @Param('userId') userId: string, @Body() dto: ReviewKycDocumentDto) {
+    return this.usersService.reviewOnboardingKyc(Number(userId), dto, req.user.role);
   }
 }
