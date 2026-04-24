@@ -7,6 +7,7 @@ import { UsersModule } from './users/users.module';
 import { PassesModule } from './passes/passes.module';
 import { MerchantsModule } from './merchants/merchants.module';
 import { ProductsModule } from './products/products.module';
+import { PaymentsModule } from './payments/payments.module';
 import { SponsorsModule } from './sponsors/sponsors.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { BlockchainModule } from './blockchain/blockchain.module';
@@ -38,6 +39,7 @@ import { HealthModule } from './health/health.module';
     PassesModule,
     MerchantsModule,
     ProductsModule,
+    PaymentsModule,
     SponsorsModule,
     AnalyticsModule,
     BlockchainModule,
