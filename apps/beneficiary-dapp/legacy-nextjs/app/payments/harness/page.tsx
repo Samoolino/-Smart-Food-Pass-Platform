@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { ProtectedRoute } from '../../../components/protected-route';
 import { RoleNavigation } from '../../../components/role-navigation';
 import { api } from '../../../lib/api';
 
@@ -105,97 +106,99 @@ export default function PaymentsHarnessPage() {
   };
 
   return (
-    <main className="min-h-screen bg-cyan-50 px-6 py-8">
-      <div className="max-w-7xl mx-auto">
-        <RoleNavigation current="payments" />
+    <ProtectedRoute allowedRoles={['admin', 'super_admin', 'sponsor', 'merchant']}>
+      <main className="min-h-screen bg-cyan-50 px-6 py-8">
+        <div className="max-w-7xl mx-auto">
+          <RoleNavigation current="payments" />
 
-        <section className="rounded-[1.75rem] bg-gradient-to-br from-slate-950 via-cyan-950 to-slate-900 text-white p-8 mb-8">
-          <p className="text-cyan-300 uppercase tracking-[0.22em] text-xs mb-3">Payment integration harness</p>
-          <h1 className="text-4xl font-bold mb-4">Wallet-aware payment simulation and settlement tracing</h1>
-          <p className="text-slate-300 max-w-4xl leading-8">
-            Use this frontend surface to stage user plans, generate simulated payment intents, and record settlement traces that expose merchant wallet, product-owner wallet, and payer wallet pathways.
-          </p>
-        </section>
+          <section className="rounded-[1.75rem] bg-gradient-to-br from-slate-950 via-cyan-950 to-slate-900 text-white p-8 mb-8">
+            <p className="text-cyan-300 uppercase tracking-[0.22em] text-xs mb-3">Payment integration harness</p>
+            <h1 className="text-4xl font-bold mb-4">Wallet-aware payment simulation and settlement tracing</h1>
+            <p className="text-slate-300 max-w-4xl leading-8">
+              Use this frontend surface to stage user plans, generate simulated payment intents, and record settlement traces that expose merchant wallet, product-owner wallet, and payer wallet pathways.
+            </p>
+          </section>
 
-        {message && <div className="bg-emerald-50 text-emerald-700 rounded-xl p-4 mb-4">{message}</div>}
-        {error && <div className="bg-red-50 text-red-700 rounded-xl p-4 mb-4">{error}</div>}
+          {message && <div className="bg-emerald-50 text-emerald-700 rounded-xl p-4 mb-4">{message}</div>}
+          {error && <div className="bg-red-50 text-red-700 rounded-xl p-4 mb-4">{error}</div>}
 
-        <section className="grid xl:grid-cols-[0.9fr_1.1fr] gap-6 mb-8">
-          <div className="bg-white rounded-[1.5rem] border border-cyan-100 p-6 shadow-sm">
-            <p className="text-slate-500 text-sm mb-1">User plan activation</p>
-            <h2 className="text-2xl font-semibold text-slate-900 mb-4">Plan creation harness</h2>
-            <div className="grid md:grid-cols-2 gap-4">
-              {Object.entries(planForm).map(([key, value]) => (
-                <div key={key}>
-                  <label className="text-sm text-slate-600 block mb-2">{key}</label>
-                  <input value={value} onChange={(e) => setPlanForm((current) => ({ ...current, [key]: e.target.value }))} className="w-full rounded-xl border border-slate-300 px-4 py-3" />
-                </div>
-              ))}
-            </div>
-            <button onClick={createPlan} className="rounded-xl bg-slate-900 text-white px-5 py-3 font-medium mt-6">Create plan</button>
-
-            <div className="mt-6 rounded-2xl bg-slate-50 border border-slate-200 p-4">
-              <p className="text-sm text-slate-500 mb-2">Existing plans</p>
-              <div className="space-y-3 max-h-80 overflow-auto pr-1">
-                {plans.map((plan) => (
-                  <div key={plan.id} className="rounded-xl border border-slate-200 bg-white p-3">
-                    <p className="font-medium text-slate-900">{plan.planName}</p>
-                    <p className="text-sm text-slate-500">{plan.planCode} · {plan.status}</p>
+          <section className="grid xl:grid-cols-[0.9fr_1.1fr] gap-6 mb-8">
+            <div className="bg-white rounded-[1.5rem] border border-cyan-100 p-6 shadow-sm">
+              <p className="text-slate-500 text-sm mb-1">User plan activation</p>
+              <h2 className="text-2xl font-semibold text-slate-900 mb-4">Plan creation harness</h2>
+              <div className="grid md:grid-cols-2 gap-4">
+                {Object.entries(planForm).map(([key, value]) => (
+                  <div key={key}>
+                    <label className="text-sm text-slate-600 block mb-2">{key}</label>
+                    <input value={value} onChange={(e) => setPlanForm((current) => ({ ...current, [key]: e.target.value }))} className="w-full rounded-xl border border-slate-300 px-4 py-3" />
                   </div>
                 ))}
-                {plans.length === 0 && <p className="text-slate-500">No plans recorded yet.</p>}
               </div>
-            </div>
-          </div>
+              <button onClick={createPlan} className="rounded-xl bg-slate-900 text-white px-5 py-3 font-medium mt-6">Create plan</button>
 
-          <div className="bg-white rounded-[1.5rem] border border-cyan-100 p-6 shadow-sm">
-            <p className="text-slate-500 text-sm mb-1">Provider simulation</p>
-            <h2 className="text-2xl font-semibold text-slate-900 mb-4">Payment intent and settlement trace</h2>
-            <div className="grid md:grid-cols-2 gap-4">
-              {Object.entries(intentForm).map(([key, value]) => (
-                <div key={key}>
-                  <label className="text-sm text-slate-600 block mb-2">{key}</label>
-                  <input value={value} onChange={(e) => setIntentForm((current) => ({ ...current, [key]: e.target.value }))} className="w-full rounded-xl border border-slate-300 px-4 py-3" />
-                </div>
-              ))}
-            </div>
-            <div className="flex flex-wrap gap-3 mt-6">
-              <button onClick={createIntent} className="rounded-xl bg-cyan-600 text-white px-5 py-3 font-medium">Generate test intent</button>
-              <button onClick={createSettlement} className="rounded-xl border border-slate-300 bg-white px-5 py-3 font-medium text-slate-700">Record settlement trace</button>
-            </div>
-
-            {intentResult && (
-              <div className="mt-6 rounded-2xl bg-cyan-50 border border-cyan-100 p-4">
-                <p className="text-sm text-cyan-700 mb-2">Intent routing definition</p>
-                <div className="space-y-1 text-sm text-cyan-900 break-all">
-                  <p>Provider: {intentResult.provider}</p>
-                  <p>Reference: {intentResult.providerReference}</p>
-                  <p>Payer wallet: {intentResult.payerWalletAddress || 'not mapped'}</p>
-                  <p>Payee wallet: {intentResult.payeeWalletAddress || 'not mapped'}</p>
-                  <p>Merchant wallet: {intentResult.merchantWalletAddress || 'not mapped'}</p>
-                  <p>Product owner wallet: {intentResult.productOwnerWalletAddress || 'not mapped'}</p>
-                </div>
-              </div>
-            )}
-
-            <div className="mt-6 rounded-2xl bg-slate-50 border border-slate-200 p-4">
-              <p className="text-sm text-slate-500 mb-2">Settlement trace log</p>
-              <div className="space-y-3 max-h-80 overflow-auto pr-1">
-                {settlements.map((settlement) => (
-                  <div key={settlement.id} className="rounded-xl border border-slate-200 bg-white p-3">
-                    <div className="flex items-center justify-between gap-4">
-                      <p className="font-medium text-slate-900">{settlement.provider || 'simulated-pay'}</p>
-                      <p className="font-semibold text-slate-900">₦{settlement.amount}</p>
+              <div className="mt-6 rounded-2xl bg-slate-50 border border-slate-200 p-4">
+                <p className="text-sm text-slate-500 mb-2">Existing plans</p>
+                <div className="space-y-3 max-h-80 overflow-auto pr-1">
+                  {plans.map((plan) => (
+                    <div key={plan.id} className="rounded-xl border border-slate-200 bg-white p-3">
+                      <p className="font-medium text-slate-900">{plan.planName}</p>
+                      <p className="text-sm text-slate-500">{plan.planCode} · {plan.status}</p>
                     </div>
-                    <p className="text-sm text-slate-500 mt-1">{settlement.settlementStatus} · {settlement.providerReference || 'no-ref'}</p>
-                  </div>
-                ))}
-                {settlements.length === 0 && <p className="text-slate-500">No settlement traces recorded yet.</p>}
+                  ))}
+                  {plans.length === 0 && <p className="text-slate-500">No plans recorded yet.</p>}
+                </div>
               </div>
             </div>
-          </div>
-        </section>
-      </div>
-    </main>
+
+            <div className="bg-white rounded-[1.5rem] border border-cyan-100 p-6 shadow-sm">
+              <p className="text-slate-500 text-sm mb-1">Provider simulation</p>
+              <h2 className="text-2xl font-semibold text-slate-900 mb-4">Payment intent and settlement trace</h2>
+              <div className="grid md:grid-cols-2 gap-4">
+                {Object.entries(intentForm).map(([key, value]) => (
+                  <div key={key}>
+                    <label className="text-sm text-slate-600 block mb-2">{key}</label>
+                    <input value={value} onChange={(e) => setIntentForm((current) => ({ ...current, [key]: e.target.value }))} className="w-full rounded-xl border border-slate-300 px-4 py-3" />
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-3 mt-6">
+                <button onClick={createIntent} className="rounded-xl bg-cyan-600 text-white px-5 py-3 font-medium">Generate test intent</button>
+                <button onClick={createSettlement} className="rounded-xl border border-slate-300 bg-white px-5 py-3 font-medium text-slate-700">Record settlement trace</button>
+              </div>
+
+              {intentResult && (
+                <div className="mt-6 rounded-2xl bg-cyan-50 border border-cyan-100 p-4">
+                  <p className="text-sm text-cyan-700 mb-2">Intent routing definition</p>
+                  <div className="space-y-1 text-sm text-cyan-900 break-all">
+                    <p>Provider: {intentResult.provider}</p>
+                    <p>Reference: {intentResult.providerReference}</p>
+                    <p>Payer wallet: {intentResult.payerWalletAddress || 'not mapped'}</p>
+                    <p>Payee wallet: {intentResult.payeeWalletAddress || 'not mapped'}</p>
+                    <p>Merchant wallet: {intentResult.merchantWalletAddress || 'not mapped'}</p>
+                    <p>Product owner wallet: {intentResult.productOwnerWalletAddress || 'not mapped'}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-6 rounded-2xl bg-slate-50 border border-slate-200 p-4">
+                <p className="text-sm text-slate-500 mb-2">Settlement trace log</p>
+                <div className="space-y-3 max-h-80 overflow-auto pr-1">
+                  {settlements.map((settlement) => (
+                    <div key={settlement.id} className="rounded-xl border border-slate-200 bg-white p-3">
+                      <div className="flex items-center justify-between gap-4">
+                        <p className="font-medium text-slate-900">{settlement.provider || 'simulated-pay'}</p>
+                        <p className="font-semibold text-slate-900">₦{settlement.amount}</p>
+                      </div>
+                      <p className="text-sm text-slate-500 mt-1">{settlement.settlementStatus} · {settlement.providerReference || 'no-ref'}</p>
+                    </div>
+                  ))}
+                  {settlements.length === 0 && <p className="text-slate-500">No settlement traces recorded yet.</p>}
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </ProtectedRoute>
   );
 }
