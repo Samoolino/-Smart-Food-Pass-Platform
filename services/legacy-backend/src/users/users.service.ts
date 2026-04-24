@@ -11,21 +11,21 @@ const DEFAULT_ONBOARDING_BY_ROLE: Record<string, { activeStep: string; roleVaria
     activeStep: 'account',
     roleVariant: 'beneficiary',
     account: { role: 'beneficiary', security: ['2FA'] },
-    kyc: { pepStatus: 'pending', consentChecked: false },
+    kyc: { pepStatus: 'pending', consentChecked: false, reviewState: 'draft', reviewNotes: [] },
     finance: { authorizationMode: 'biometric', bankConnectionStatus: 'not_connected', cardConnectionStatus: 'not_connected' },
   },
   merchant: {
     activeStep: 'account',
     roleVariant: 'merchant',
     account: { role: 'merchant', security: ['2FA', 'PIN'] },
-    kyc: { pepStatus: 'pending', consentChecked: false, businessVerificationRequired: true },
+    kyc: { pepStatus: 'pending', consentChecked: false, businessVerificationRequired: true, reviewState: 'draft', reviewNotes: [] },
     finance: { authorizationMode: '2fa', bankConnectionStatus: 'not_connected', cardConnectionStatus: 'not_connected' },
   },
   sponsor: {
     activeStep: 'account',
     roleVariant: 'sponsor',
     account: { role: 'sponsor', security: ['2FA', 'PIN'] },
-    kyc: { pepStatus: 'pending', consentChecked: false, businessVerificationRequired: true },
+    kyc: { pepStatus: 'pending', consentChecked: false, businessVerificationRequired: true, reviewState: 'draft', reviewNotes: [] },
     finance: { authorizationMode: '2fa', bankConnectionStatus: 'not_connected', cardConnectionStatus: 'not_connected' },
   },
 };
@@ -78,7 +78,7 @@ export class UsersService {
       draft = await this.onboardingDraftRepository.save(draft);
     }
 
-    return draft;
+    return this.decorateDraft(draft);
   }
 
   async updateOnboardingDraft(userId: number, dto: UpdateOnboardingDraftDto) {
@@ -98,10 +98,71 @@ export class UsersService {
     if (dto.roleVariant !== undefined) draft.roleVariant = dto.roleVariant;
     if (dto.completionStatus !== undefined) draft.completionStatus = dto.completionStatus;
     if (dto.account) draft.account = { ...(draft.account || {}), ...dto.account };
-    if (dto.kyc) draft.kyc = { ...(draft.kyc || {}), ...dto.kyc };
+    if (dto.kyc) draft.kyc = this.normalizeKycPayload({ ...(draft.kyc || {}), ...dto.kyc }, dto.roleVariant || draft.roleVariant || user.role);
     if (dto.finance) draft.finance = { ...(draft.finance || {}), ...dto.finance };
 
-    return this.onboardingDraftRepository.save(draft);
+    const saved = await this.onboardingDraftRepository.save(draft);
+    return this.decorateDraft(saved);
+  }
+
+  private normalizeKycPayload(kyc: Record<string, any>, roleVariant?: string) {
+    const updated = { ...kyc };
+    const fileDefinitions = [
+      { fileNameKey: 'governmentIdFileName', metaKey: 'governmentIdMeta', label: 'Government ID' },
+      { fileNameKey: 'proofOfAddressFileName', metaKey: 'proofOfAddressMeta', label: 'Proof of address' },
+      { fileNameKey: 'businessVerificationFileName', metaKey: 'businessVerificationMeta', label: 'Business verification' },
+    ] as const;
+
+    const reviewNotes = new Set<string>((updated.reviewNotes as string[] | undefined) || []);
+
+    fileDefinitions.forEach(({ fileNameKey, metaKey, label }) => {
+      const fileName = updated[fileNameKey];
+      const currentMeta = updated[metaKey] || {};
+      if (fileName) {
+        updated[metaKey] = {
+          fileName,
+          uploadedAt: currentMeta.uploadedAt || new Date().toISOString(),
+          validationStatus: currentMeta.validationStatus || 'uploaded',
+          reviewerNote: currentMeta.reviewerNote || `Awaiting validation for ${label.toLowerCase()}.`,
+          size: currentMeta.size,
+          type: currentMeta.type,
+        };
+      }
+    });
+
+    if (updated.governmentIdMeta?.validationStatus === 'uploaded' || updated.proofOfAddressMeta?.validationStatus === 'uploaded' || updated.businessVerificationMeta?.validationStatus === 'uploaded') {
+      updated.reviewState = 'documents_uploaded';
+      reviewNotes.add('Documents uploaded and awaiting validation review.');
+    }
+
+    if (updated.consentChecked) {
+      reviewNotes.add('Applicant acknowledged secure verification handling.');
+    }
+
+    if (roleVariant === UserRole.MERCHANT || roleVariant === UserRole.SPONSOR || roleVariant === 'merchant' || roleVariant === 'sponsor') {
+      updated.businessVerificationRequired = true;
+      if (!updated.businessVerificationFileName) {
+        reviewNotes.add('Business verification is required for this role variant.');
+      }
+    }
+
+    updated.reviewNotes = Array.from(reviewNotes);
+    return updated;
+  }
+
+  private decorateDraft(draft: OnboardingDraft) {
+    const kyc = draft.kyc || {};
+    const statuses = [kyc.governmentIdMeta?.validationStatus, kyc.proofOfAddressMeta?.validationStatus, kyc.businessVerificationMeta?.validationStatus].filter(Boolean);
+    const approvedCount = statuses.filter((status) => status === 'approved').length;
+    return {
+      ...draft,
+      reviewSummary: {
+        reviewState: kyc.reviewState || 'draft',
+        approvedCount,
+        uploadedCount: [kyc.governmentIdFileName, kyc.proofOfAddressFileName, kyc.businessVerificationFileName].filter(Boolean).length,
+        reviewNotes: kyc.reviewNotes || [],
+      },
+    };
   }
 
   private getDefaultDraftForRole(role: UserRole) {
