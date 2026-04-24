@@ -37,6 +37,18 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+  getProfile: () => request('/users/profile'),
+  updateProfile: (payload: Record<string, unknown>) =>
+    request('/users/profile', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+  getOnboardingDraft: () => request('/users/onboarding-draft'),
+  updateOnboardingDraft: (payload: Record<string, unknown>) =>
+    request('/users/onboarding-draft', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
   getSponsorDashboard: () => request('/analytics/sponsor/dashboard'),
   getSponsorPasses: () => request('/analytics/sponsor/passes'),
   getSponsorRedemptions: () => request('/analytics/sponsor/redemptions'),
