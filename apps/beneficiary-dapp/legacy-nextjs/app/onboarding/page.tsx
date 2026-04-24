@@ -157,6 +157,7 @@ export default function OnboardingPage() {
             <div className="flex flex-wrap gap-3 mt-6">
               <Link href="/auth/signup" className="rounded-full bg-indigo-400 text-slate-950 px-5 py-3 font-medium hover:bg-indigo-300">Open account</Link>
               <Link href="/payments/harness" className="rounded-full border border-white/15 bg-white/10 px-5 py-3 font-medium hover:bg-white/15">View payment verification lane</Link>
+              <Link href="/onboarding/review" className="rounded-full border border-cyan-300/30 bg-cyan-400/10 px-5 py-3 font-medium text-cyan-100 hover:bg-cyan-400/20">Open review dashboard</Link>
               <Link href="/nutrition" className="rounded-full border border-emerald-300/30 bg-emerald-400/10 px-5 py-3 font-medium text-emerald-100 hover:bg-emerald-400/20">Open nutrition access lane</Link>
             </div>
           </section>
