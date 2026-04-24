@@ -10,6 +10,18 @@ export function getStoredRole(): AppRole {
   return (localStorage.getItem('role') as AppRole) || null;
 }
 
+export function getStoredToken() {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  return localStorage.getItem('token');
+}
+
+export function hasStoredSession() {
+  return Boolean(getStoredToken() && getStoredRole());
+}
+
 export function getDefaultRouteForRole(role: AppRole) {
   switch (role) {
     case 'admin':
