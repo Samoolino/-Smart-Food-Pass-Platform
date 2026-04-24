@@ -49,6 +49,11 @@ export const api = {
       method: 'PUT',
       body: JSON.stringify(payload),
     }),
+  reviewOnboardingKyc: (userId: number, payload: { target: 'governmentId' | 'proofOfAddress' | 'businessVerification'; status: 'approved' | 'rejected' | 'under_review'; note?: string }) =>
+    request(`/users/${userId}/onboarding-draft/review`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
   getSponsorDashboard: () => request('/analytics/sponsor/dashboard'),
   getSponsorPasses: () => request('/analytics/sponsor/passes'),
   getSponsorRedemptions: () => request('/analytics/sponsor/redemptions'),
