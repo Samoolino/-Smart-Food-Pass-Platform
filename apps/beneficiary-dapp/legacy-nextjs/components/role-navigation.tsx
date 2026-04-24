@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { clearStoredSession, getDefaultRouteForRole, getStoredRole, type AppRole } from '../lib/session';
 
 type RoleNavigationProps = {
-  current: 'home' | 'sponsor' | 'merchant' | 'beneficiary' | 'admin' | 'marketplace' | 'payments';
+  current: 'home' | 'sponsor' | 'merchant' | 'beneficiary' | 'admin' | 'marketplace' | 'payments' | 'onboarding' | 'nutrition';
 };
 
 export function RoleNavigation({ current }: RoleNavigationProps) {
@@ -18,7 +18,9 @@ export function RoleNavigation({ current }: RoleNavigationProps) {
   const items = useMemo(() => {
     const allItems = [
       { key: 'home', href: '/', label: 'Home', roles: ['admin', 'super_admin', 'sponsor', 'merchant', 'beneficiary', null] },
+      { key: 'onboarding', href: '/onboarding', label: 'Onboarding', roles: ['admin', 'super_admin', 'sponsor', 'merchant', 'beneficiary', null] },
       { key: 'marketplace', href: '/marketplace', label: 'Marketplace', roles: ['admin', 'super_admin', 'sponsor', 'merchant', 'beneficiary', null] },
+      { key: 'nutrition', href: '/nutrition', label: 'Nutrition', roles: ['admin', 'super_admin', 'sponsor', 'beneficiary'] },
       { key: 'payments', href: '/payments/harness', label: 'Payments', roles: ['admin', 'super_admin', 'sponsor', 'merchant'] },
       { key: 'sponsor', href: '/sponsor/dashboard', label: 'Sponsor', roles: ['admin', 'super_admin', 'sponsor'] },
       { key: 'merchant', href: '/merchant/redeem', label: 'Merchant', roles: ['admin', 'super_admin', 'merchant'] },

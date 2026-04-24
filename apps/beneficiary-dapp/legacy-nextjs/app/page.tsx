@@ -168,7 +168,7 @@ export default function HomePage() {
             </h1>
             <p className="text-slate-300 text-lg mt-6 max-w-3xl leading-8">
               Open an authorized space for product access, donation-to-utility conversion, smart stamp eligibility,
-              merchant marketplace routing, payment verification, and blockchain-aware transaction trust.
+              merchant marketplace routing, payment verification, onboarding compliance, and blockchain-aware transaction trust.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
@@ -177,6 +177,9 @@ export default function HomePage() {
               </Link>
               <Link href="/auth/signup" className="rounded-full border border-white/15 bg-white/10 hover:bg-white/15 px-6 py-3 font-medium">
                 Open Account
+              </Link>
+              <Link href="/onboarding" className="rounded-full border border-indigo-400/30 bg-indigo-500/10 hover:bg-indigo-500/20 px-6 py-3 font-medium text-indigo-100">
+                Review onboarding flow
               </Link>
               {role && (
                 <Link href={getDefaultRouteForRole(role)} className="rounded-full border border-emerald-400/30 bg-emerald-500/10 hover:bg-emerald-500/20 px-6 py-3 font-medium text-emerald-100">
@@ -276,7 +279,14 @@ export default function HomePage() {
           ))}
         </section>
 
-        <section className="grid lg:grid-cols-[1fr_1fr] gap-6">
+        <section className="grid lg:grid-cols-3 gap-6">
+          <Link href="/onboarding" className="rounded-[1.75rem] border border-white/10 bg-slate-900/70 p-8 hover:border-indigo-300/30 transition">
+            <p className="text-indigo-300 uppercase tracking-[0.22em] text-xs mb-3">Onboarding pathway</p>
+            <h3 className="text-3xl font-semibold mb-4">Registration, KYC, and authorized access</h3>
+            <p className="text-slate-300 leading-8">
+              Walk through secure account creation, document verification, financial connection language, and movement into a verified access space.
+            </p>
+          </Link>
           <Link href="/marketplace" className="rounded-[1.75rem] border border-white/10 bg-slate-900/70 p-8 hover:border-amber-300/30 transition">
             <p className="text-amber-300 uppercase tracking-[0.22em] text-xs mb-3">Product marketplace indicator</p>
             <h3 className="text-3xl font-semibold mb-4">Registry-linked product marketplace</h3>
@@ -285,11 +295,11 @@ export default function HomePage() {
               and nutritional supply-chain guidance in one operational marketplace space.
             </p>
           </Link>
-          <Link href="/payments/harness" className="rounded-[1.75rem] border border-white/10 bg-slate-900/70 p-8 hover:border-cyan-300/30 transition">
-            <p className="text-cyan-300 uppercase tracking-[0.22em] text-xs mb-3">Payment integration test lane</p>
-            <h3 className="text-3xl font-semibold mb-4">Verification, authorization, and settlement tracing</h3>
+          <Link href="/nutrition" className="rounded-[1.75rem] border border-white/10 bg-slate-900/70 p-8 hover:border-emerald-300/30 transition">
+            <p className="text-emerald-300 uppercase tracking-[0.22em] text-xs mb-3">Nutritional recommendation lane</p>
+            <h3 className="text-3xl font-semibold mb-4">Plan-aware and pass-aware product guidance</h3>
             <p className="text-slate-300 leading-8">
-              Test intent routing, inspect payer and payee wallet definitions, and follow simulated settlement records that prepare the way for real payment integration and final authorization UX.
+              Resolve accessible products from plan rules and pass eligibility, then inspect guided access signals before payment authorization and merchant redemption.
             </p>
           </Link>
         </section>
