@@ -32,6 +32,12 @@ export class Product {
   @Column({ name: 'product_image_url', nullable: true })
   productImageUrl?: string;
 
+  @Column({ name: 'owner_user_id', nullable: true })
+  ownerUserId?: number;
+
+  @Column({ name: 'owner_wallet_address', nullable: true })
+  ownerWalletAddress?: string;
+
   @Column({ name: 'is_approved', default: true })
   isApproved: boolean;
 
