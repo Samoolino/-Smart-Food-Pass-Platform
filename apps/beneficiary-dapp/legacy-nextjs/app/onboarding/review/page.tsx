@@ -27,17 +27,19 @@ export default function OnboardingReviewPage() {
   const [draft, setDraft] = useState<any | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+
+  const load = async () => {
+    try {
+      const [profileData, draftData] = await Promise.all([api.getProfile(), api.getOnboardingDraft()]);
+      setProfile(profileData);
+      setDraft(draftData);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load onboarding review dashboard');
+    }
+  };
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const [profileData, draftData] = await Promise.all([api.getProfile(), api.getOnboardingDraft()]);
-        setProfile(profileData);
-        setDraft(draftData);
-      } catch (err: any) {
-        setError(err.message || 'Failed to load onboarding review dashboard');
-      }
-    };
     load();
   }, []);
 
@@ -45,11 +47,24 @@ export default function OnboardingReviewPage() {
   const reviewSummary = draft?.reviewSummary || { reviewState: 'draft', approvedCount: 0, uploadedCount: 0, reviewNotes: [] };
   const kyc = draft?.kyc || {};
   const fileRows = [
-    { label: 'Government ID', meta: kyc.governmentIdMeta, fileName: kyc.governmentIdFileName },
-    { label: 'Proof of address', meta: kyc.proofOfAddressMeta, fileName: kyc.proofOfAddressFileName },
-    { label: 'Business verification', meta: kyc.businessVerificationMeta, fileName: kyc.businessVerificationFileName },
+    { key: 'governmentId', label: 'Government ID', meta: kyc.governmentIdMeta, fileName: kyc.governmentIdFileName },
+    { key: 'proofOfAddress', label: 'Proof of address', meta: kyc.proofOfAddressMeta, fileName: kyc.proofOfAddressFileName },
+    { key: 'businessVerification', label: 'Business verification', meta: kyc.businessVerificationMeta, fileName: kyc.businessVerificationFileName },
   ].filter((row) => row.fileName || row.meta);
   const cards = useMemo(() => roleCards[roleVariant] || roleCards.beneficiary, [roleVariant]);
+  const isAdminReviewer = profile?.role === 'admin' || profile?.role === 'super_admin';
+
+  const review = async (target: 'governmentId' | 'proofOfAddress' | 'businessVerification', status: 'approved' | 'rejected' | 'under_review') => {
+    if (!draft?.userId) return;
+    try {
+      setError('');
+      const updated = await api.reviewOnboardingKyc(draft.userId, { target, status, note: `${target} marked ${status}.` });
+      setDraft(updated);
+      setMessage(`${target} marked ${status}.`);
+    } catch (err: any) {
+      setError(err.message || 'Failed to update review state');
+    }
+  };
 
   return (
     <ProtectedRoute allowedRoles={['admin', 'super_admin', 'sponsor', 'merchant', 'beneficiary']}>
@@ -64,6 +79,7 @@ export default function OnboardingReviewPage() {
           </section>
 
           {error && <div className="rounded-xl bg-red-50 text-red-700 p-4 mb-6">{error}</div>}
+          {message && <div className="rounded-xl bg-emerald-50 text-emerald-700 p-4 mb-6">{message}</div>}
 
           <section className="grid md:grid-cols-4 gap-4 mb-8">
             <div className="rounded-2xl border border-slate-200 bg-white p-5"><p className="text-sm text-slate-500">Role variant</p><p className="text-2xl font-bold text-slate-900 mt-2 capitalize">{roleVariant}</p></div>
@@ -86,10 +102,15 @@ export default function OnboardingReviewPage() {
                     <div className="space-y-1 text-sm text-slate-600 break-all">
                       <p>File: {row.fileName || row.meta?.fileName || 'not provided'}</p>
                       {row.meta?.uploadedAt && <p>Uploaded: {new Date(row.meta.uploadedAt).toLocaleString()}</p>}
-                      {row.meta?.type && <p>MIME type: {row.meta.type}</p>}
-                      {row.meta?.size !== undefined && <p>Size: {row.meta.size} bytes</p>}
                       {row.meta?.reviewerNote && <p>Reviewer note: {row.meta.reviewerNote}</p>}
                     </div>
+                    {isAdminReviewer && (
+                      <div className="flex flex-wrap gap-2 mt-4">
+                        <button onClick={() => review(row.key as any, 'under_review')} className="rounded-full border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-700">Under review</button>
+                        <button onClick={() => review(row.key as any, 'approved')} className="rounded-full bg-emerald-600 px-3 py-2 text-xs font-medium text-white">Approve</button>
+                        <button onClick={() => review(row.key as any, 'rejected')} className="rounded-full bg-red-600 px-3 py-2 text-xs font-medium text-white">Reject</button>
+                      </div>
+                    )}
                   </div>
                 ))}
                 {fileRows.length === 0 && <p className="text-slate-500">No KYC files are recorded in the draft yet.</p>}
