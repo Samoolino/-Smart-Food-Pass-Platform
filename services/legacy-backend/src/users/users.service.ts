@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { ReviewKycDocumentDto } from './dto/review-kyc-document.dto';
 import { UpdateOnboardingDraftDto } from './dto/update-onboarding-draft.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { OnboardingDraft } from './entities/onboarding-draft.entity';
@@ -41,40 +42,25 @@ export class UsersService {
 
   async findById(id: number) {
     const user = await this.usersRepository.findOne({ where: { id } });
-
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
+    if (!user) throw new NotFoundException('User not found');
     return this.sanitizeUser(user);
   }
 
   async updateProfile(id: number, dto: UpdateProfileDto) {
     const user = await this.usersRepository.findOne({ where: { id } });
-
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
+    if (!user) throw new NotFoundException('User not found');
     Object.assign(user, dto);
     const saved = await this.usersRepository.save(user);
-
     return this.sanitizeUser(saved);
   }
 
   async getOnboardingDraft(userId: number) {
     const user = await this.usersRepository.findOne({ where: { id: userId } });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
+    if (!user) throw new NotFoundException('User not found');
 
     let draft = await this.onboardingDraftRepository.findOne({ where: { userId } });
     if (!draft) {
-      draft = this.onboardingDraftRepository.create({
-        userId,
-        ...this.getDefaultDraftForRole(user.role),
-        completionStatus: 'draft',
-      });
+      draft = this.onboardingDraftRepository.create({ userId, ...this.getDefaultDraftForRole(user.role), completionStatus: 'draft' });
       draft = await this.onboardingDraftRepository.save(draft);
     }
 
@@ -83,16 +69,11 @@ export class UsersService {
 
   async updateOnboardingDraft(userId: number, dto: UpdateOnboardingDraftDto) {
     const user = await this.usersRepository.findOne({ where: { id: userId } });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
+    if (!user) throw new NotFoundException('User not found');
 
     const existingDraft = await this.getOnboardingDraft(userId);
     const draft = await this.onboardingDraftRepository.findOne({ where: { id: existingDraft.id } });
-
-    if (!draft) {
-      throw new NotFoundException('Onboarding draft not found');
-    }
+    if (!draft) throw new NotFoundException('Onboarding draft not found');
 
     if (dto.activeStep !== undefined) draft.activeStep = dto.activeStep;
     if (dto.roleVariant !== undefined) draft.roleVariant = dto.roleVariant;
@@ -101,6 +82,54 @@ export class UsersService {
     if (dto.kyc) draft.kyc = this.normalizeKycPayload({ ...(draft.kyc || {}), ...dto.kyc }, dto.roleVariant || draft.roleVariant || user.role);
     if (dto.finance) draft.finance = { ...(draft.finance || {}), ...dto.finance };
 
+    const saved = await this.onboardingDraftRepository.save(draft);
+    return this.decorateDraft(saved);
+  }
+
+  async reviewOnboardingKyc(userId: number, dto: ReviewKycDocumentDto, reviewerRole: string) {
+    const existingDraft = await this.getOnboardingDraft(userId);
+    const draft = await this.onboardingDraftRepository.findOne({ where: { id: existingDraft.id } });
+    if (!draft) throw new NotFoundException('Onboarding draft not found');
+
+    const metaField = dto.target === 'governmentId' ? 'governmentIdMeta' : dto.target === 'proofOfAddress' ? 'proofOfAddressMeta' : 'businessVerificationMeta';
+    const fileNameField = dto.target === 'governmentId' ? 'governmentIdFileName' : dto.target === 'proofOfAddress' ? 'proofOfAddressFileName' : 'businessVerificationFileName';
+    const currentMeta = draft.kyc?.[metaField];
+    if (!draft.kyc?.[fileNameField]) {
+      throw new NotFoundException('KYC file not found for selected target');
+    }
+
+    const reviewNotes = new Set<string>((draft.kyc?.reviewNotes as string[] | undefined) || []);
+    reviewNotes.add(`${dto.target} set to ${dto.status} by ${reviewerRole}.`);
+    if (dto.note) reviewNotes.add(dto.note);
+
+    const kyc = {
+      ...(draft.kyc || {}),
+      [metaField]: {
+        ...(currentMeta || {}),
+        fileName: currentMeta?.fileName || draft.kyc[fileNameField],
+        validationStatus: dto.status,
+        reviewerNote: dto.note || currentMeta?.reviewerNote || `Marked ${dto.status}.`,
+        reviewedAt: new Date().toISOString(),
+      },
+      reviewNotes: Array.from(reviewNotes),
+    };
+
+    const statuses = [kyc.governmentIdMeta?.validationStatus, kyc.proofOfAddressMeta?.validationStatus, kyc.businessVerificationMeta?.validationStatus].filter(Boolean);
+    const allRelevantApproved = draft.roleVariant === 'beneficiary'
+      ? kyc.governmentIdMeta?.validationStatus === 'approved' && kyc.proofOfAddressMeta?.validationStatus === 'approved'
+      : kyc.governmentIdMeta?.validationStatus === 'approved' && kyc.proofOfAddressMeta?.validationStatus === 'approved' && kyc.businessVerificationMeta?.validationStatus === 'approved';
+
+    if (allRelevantApproved) {
+      kyc.reviewState = 'approved';
+      draft.completionStatus = 'review_approved';
+    } else if (statuses.includes('rejected')) {
+      kyc.reviewState = 'rejected';
+      draft.completionStatus = 'review_changes_required';
+    } else if (statuses.includes('under_review')) {
+      kyc.reviewState = 'under_review';
+    }
+
+    draft.kyc = kyc;
     const saved = await this.onboardingDraftRepository.save(draft);
     return this.decorateDraft(saved);
   }
@@ -114,7 +143,6 @@ export class UsersService {
     ] as const;
 
     const reviewNotes = new Set<string>((updated.reviewNotes as string[] | undefined) || []);
-
     fileDefinitions.forEach(({ fileNameKey, metaKey, label }) => {
       const fileName = updated[fileNameKey];
       const currentMeta = updated[metaKey] || {};
@@ -134,18 +162,11 @@ export class UsersService {
       updated.reviewState = 'documents_uploaded';
       reviewNotes.add('Documents uploaded and awaiting validation review.');
     }
-
-    if (updated.consentChecked) {
-      reviewNotes.add('Applicant acknowledged secure verification handling.');
-    }
-
+    if (updated.consentChecked) reviewNotes.add('Applicant acknowledged secure verification handling.');
     if (roleVariant === UserRole.MERCHANT || roleVariant === UserRole.SPONSOR || roleVariant === 'merchant' || roleVariant === 'sponsor') {
       updated.businessVerificationRequired = true;
-      if (!updated.businessVerificationFileName) {
-        reviewNotes.add('Business verification is required for this role variant.');
-      }
+      if (!updated.businessVerificationFileName) reviewNotes.add('Business verification is required for this role variant.');
     }
-
     updated.reviewNotes = Array.from(reviewNotes);
     return updated;
   }

@@ -2,6 +2,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import * as request from 'supertest';
 import { JwtAuthGuard } from '../src/auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../src/auth/guards/roles.guard';
 import { UsersController } from '../src/users/users.controller';
 import { UsersService } from '../src/users/users.service';
 
@@ -13,6 +14,7 @@ describe('Users onboarding draft (e2e)', () => {
     updateProfile: jest.fn(async (_id: number, dto: any) => ({ id: 1, ...dto })),
     getOnboardingDraft: jest.fn(async () => ({ id: 11, userId: 1, activeStep: 'account', roleVariant: 'beneficiary', completionStatus: 'draft', account: { role: 'beneficiary' }, kyc: {}, finance: {} })),
     updateOnboardingDraft: jest.fn(async (_id: number, dto: any) => ({ id: 11, userId: 1, ...dto })),
+    reviewOnboardingKyc: jest.fn(async (_id: number, dto: any) => ({ id: 11, userId: 1, reviewSummary: { reviewState: dto.status }, kyc: { [`${dto.target}Meta`]: { validationStatus: dto.status } } })),
   };
 
   beforeAll(async () => {
@@ -21,12 +23,13 @@ describe('Users onboarding draft (e2e)', () => {
       providers: [
         { provide: UsersService, useValue: usersService },
         { provide: JwtAuthGuard, useValue: { canActivate: () => true } },
+        { provide: RolesGuard, useValue: { canActivate: () => true } },
       ],
     }).compile();
 
     app = moduleRef.createNestApplication();
     app.use((req: any, _res: any, next: () => void) => {
-      req.user = { sub: 1, role: 'beneficiary' };
+      req.user = { sub: 1, role: 'admin' };
       next();
     });
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
@@ -51,5 +54,15 @@ describe('Users onboarding draft (e2e)', () => {
 
     expect(response.body.activeStep).toBe('finance');
     expect(response.body.roleVariant).toBe('sponsor');
+  });
+
+  it('reviews a kyc document as admin', async () => {
+    const response = await request(app.getHttpServer())
+      .put('/api/users/1/onboarding-draft/review')
+      .send({ target: 'governmentId', status: 'approved', note: 'Verified by admin.' })
+      .expect(200);
+
+    expect(response.body.reviewSummary.reviewState).toBe('approved');
+    expect(usersService.reviewOnboardingKyc).toHaveBeenCalledWith(1, expect.objectContaining({ target: 'governmentId' }), 'admin');
   });
 });
