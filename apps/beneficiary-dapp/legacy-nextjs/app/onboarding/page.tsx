@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { ProtectedRoute } from '../../components/protected-route';
 import { RoleNavigation } from '../../components/role-navigation';
@@ -30,7 +31,8 @@ const roleVariantContent: Record<string, { title: string; bullets: string[] }> =
 
 type StepKey = (typeof steps)[number]['key'];
 type RoleVariant = 'beneficiary' | 'merchant' | 'sponsor';
-type NotificationSummary = { tone: 'success' | 'warning' | 'info' | 'neutral'; title: string; message: string } | null;
+type FocusKey = 'governmentId' | 'proofOfAddress' | 'businessVerification' | 'riskScreening' | null;
+type NotificationSummary = { tone: 'success' | 'warning' | 'info' | 'neutral'; title: string; message: string; actionLabel?: string; actionHref?: string } | null;
 type OnboardingState = {
   activeStep: StepKey;
   account: { fullName: string; email: string; phone: string; role: RoleVariant; security: string[] };
@@ -62,6 +64,9 @@ function readStoredState(): OnboardingState {
 }
 
 export default function OnboardingPage() {
+  const searchParams = useSearchParams();
+  const requestedStep = searchParams.get('step') as StepKey | null;
+  const requestedFocus = (searchParams.get('focus') as FocusKey) || null;
   const [state, setState] = useState<OnboardingState>(initialState);
   const [hydrated, setHydrated] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'loading' | 'local' | 'synced' | 'syncing' | 'error'>('loading');
@@ -75,9 +80,10 @@ export default function OnboardingPage() {
     const loadRemote = async () => {
       try {
         const [profile, draft] = await Promise.all([api.getProfile(), api.getOnboardingDraft()]);
+        const resolvedStep = requestedStep && steps.some((step) => step.key === requestedStep) ? requestedStep : draft?.activeStep || localState.activeStep;
         setState((current) => ({
           ...current,
-          activeStep: draft?.activeStep || current.activeStep,
+          activeStep: resolvedStep,
           roleVariant: (draft?.roleVariant || profile?.role || current.roleVariant) as RoleVariant,
           completionStatus: draft?.completionStatus || current.completionStatus,
           account: {
@@ -89,7 +95,13 @@ export default function OnboardingPage() {
             security: draft?.account?.security || current.account.security,
           },
           kyc: { ...current.kyc, ...(draft?.kyc || {}) },
-          finance: { ...current.finance, walletAddress: draft?.finance?.walletAddress || profile?.walletAddress || current.finance.walletAddress, bankConnectionStatus: draft?.finance?.bankConnectionStatus || current.finance.bankConnectionStatus, cardConnectionStatus: draft?.finance?.cardConnectionStatus || current.finance.cardConnectionStatus, authorizationMode: draft?.finance?.authorizationMode || current.finance.authorizationMode },
+          finance: {
+            ...current.finance,
+            walletAddress: draft?.finance?.walletAddress || profile?.walletAddress || current.finance.walletAddress,
+            bankConnectionStatus: draft?.finance?.bankConnectionStatus || current.finance.bankConnectionStatus,
+            cardConnectionStatus: draft?.finance?.cardConnectionStatus || current.finance.cardConnectionStatus,
+            authorizationMode: draft?.finance?.authorizationMode || current.finance.authorizationMode,
+          },
         }));
         setNotificationSummary(draft?.notificationSummary || null);
         setSyncStatus('synced');
@@ -99,7 +111,7 @@ export default function OnboardingPage() {
     };
 
     loadRemote();
-  }, []);
+  }, [requestedStep]);
 
   useEffect(() => {
     if (!hydrated || typeof window === 'undefined') return;
@@ -177,6 +189,13 @@ export default function OnboardingPage() {
             <section className={`rounded-2xl border p-5 mb-8 ${notificationToneStyles[notificationSummary.tone] || notificationToneStyles.neutral}`}>
               <p className="text-sm font-semibold mb-1">{notificationSummary.title}</p>
               <p className="text-sm leading-7">{notificationSummary.message}</p>
+              {notificationSummary.actionHref && notificationSummary.actionLabel && (
+                <div className="mt-4">
+                  <Link href={notificationSummary.actionHref} className="inline-flex rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white">
+                    {notificationSummary.actionLabel}
+                  </Link>
+                </div>
+              )}
             </section>
           )}
 
@@ -198,6 +217,9 @@ export default function OnboardingPage() {
                 </div>
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">Saved progress: {hydrated ? 'On' : 'Loading'}</div>
               </div>
+              {requestedFocus && (
+                <div className="mb-4 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">Focused item: {requestedFocus}</div>
+              )}
               <p className="text-slate-600 leading-8 mb-6">{current.description}</p>
 
               <div className="rounded-[1.5rem] border border-indigo-100 bg-indigo-50 p-6 mb-6">
@@ -224,7 +246,8 @@ export default function OnboardingPage() {
                     const inputMap = { governmentId: 'government-id-upload', proofOfAddress: 'proof-of-address-upload', businessVerification: 'business-verification-upload' } as const;
                     const isBusinessItemHidden = item.key === 'businessVerification' && state.roleVariant === 'beneficiary';
                     if (isBusinessItemHidden) return null;
-                    return <div key={item.key} className="rounded-2xl border border-slate-200 bg-slate-50 p-5"><div className="flex items-center justify-between gap-4 mb-2"><p className="font-semibold text-slate-900">{item.name}</p><span className="rounded-full bg-indigo-100 text-indigo-700 px-3 py-1 text-xs font-medium">{fieldMap[item.key as keyof typeof fieldMap] ? 'Uploaded / confirmed' : item.status}</span></div><p className="text-sm text-slate-600 leading-7 mb-4">{item.note}</p>{item.key !== 'riskScreening' ? <div><label htmlFor={inputMap[item.key as keyof typeof inputMap]} className="block text-sm text-slate-600 mb-2">Upload {item.name}</label><input id={inputMap[item.key as keyof typeof inputMap]} type="file" onChange={(e) => { const fileName = e.target.files?.[0]?.name || ''; if (item.key === 'governmentId') setUploadedFileName('governmentIdFileName', fileName); if (item.key === 'proofOfAddress') setUploadedFileName('proofOfAddressFileName', fileName); if (item.key === 'businessVerification') setUploadedFileName('businessVerificationFileName', fileName); }} className="block w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm" />{fieldMap[item.key as keyof typeof fieldMap] && <p className="text-xs text-emerald-700 mt-2">Saved file: {fieldMap[item.key as keyof typeof fieldMap]}</p>}</div> : <div className="grid md:grid-cols-2 gap-4"><div><label htmlFor="pep-status" className="block text-sm text-slate-600 mb-2">PEP / screening status</label><select id="pep-status" value={state.kyc.pepStatus} onChange={(e) => updateState((currentState) => ({ ...currentState, kyc: { ...currentState.kyc, pepStatus: e.target.value } }))} className="w-full rounded-xl border border-slate-300 px-4 py-3"><option value="pending">Pending declaration</option><option value="clear">Clear</option><option value="review_required">Review required</option></select></div><label className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700 flex items-start gap-3"><input type="checkbox" checked={state.kyc.consentChecked} onChange={(e) => updateState((currentState) => ({ ...currentState, kyc: { ...currentState.kyc, consentChecked: e.target.checked } }))} className="mt-1" />I understand why these documents are required and consent to secure verification handling.</label></div>}</div>;
+                    const isFocused = requestedFocus === item.key;
+                    return <div key={item.key} className={`rounded-2xl border p-5 ${isFocused ? 'border-indigo-400 bg-indigo-50' : 'border-slate-200 bg-slate-50'}`}><div className="flex items-center justify-between gap-4 mb-2"><p className="font-semibold text-slate-900">{item.name}</p><span className="rounded-full bg-indigo-100 text-indigo-700 px-3 py-1 text-xs font-medium">{fieldMap[item.key as keyof typeof fieldMap] ? 'Uploaded / confirmed' : item.status}</span></div><p className="text-sm text-slate-600 leading-7 mb-4">{item.note}</p>{item.key !== 'riskScreening' ? <div><label htmlFor={inputMap[item.key as keyof typeof inputMap]} className="block text-sm text-slate-600 mb-2">Upload {item.name}</label><input id={inputMap[item.key as keyof typeof inputMap]} type="file" onChange={(e) => { const fileName = e.target.files?.[0]?.name || ''; if (item.key === 'governmentId') setUploadedFileName('governmentIdFileName', fileName); if (item.key === 'proofOfAddress') setUploadedFileName('proofOfAddressFileName', fileName); if (item.key === 'businessVerification') setUploadedFileName('businessVerificationFileName', fileName); }} className="block w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm" />{fieldMap[item.key as keyof typeof fieldMap] && <p className="text-xs text-emerald-700 mt-2">Saved file: {fieldMap[item.key as keyof typeof fieldMap]}</p>}</div> : <div className="grid md:grid-cols-2 gap-4"><div><label htmlFor="pep-status" className="block text-sm text-slate-600 mb-2">PEP / screening status</label><select id="pep-status" value={state.kyc.pepStatus} onChange={(e) => updateState((currentState) => ({ ...currentState, kyc: { ...currentState.kyc, pepStatus: e.target.value } }))} className="w-full rounded-xl border border-slate-300 px-4 py-3"><option value="pending">Pending declaration</option><option value="clear">Clear</option><option value="review_required">Review required</option></select></div><label className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700 flex items-start gap-3"><input type="checkbox" checked={state.kyc.consentChecked} onChange={(e) => updateState((currentState) => ({ ...currentState, kyc: { ...currentState.kyc, consentChecked: e.target.checked } }))} className="mt-1" />I understand why these documents are required and consent to secure verification handling.</label></div>}</div>;
                   })}
                 </div>
               )}
