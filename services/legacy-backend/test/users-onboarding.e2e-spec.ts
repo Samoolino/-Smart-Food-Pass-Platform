@@ -12,7 +12,8 @@ describe('Users onboarding draft (e2e)', () => {
   const usersService = {
     findById: jest.fn(async () => ({ id: 1, email: 'ada@example.com', role: 'beneficiary' })),
     updateProfile: jest.fn(async (_id: number, dto: any) => ({ id: 1, ...dto })),
-    getOnboardingDraft: jest.fn(async () => ({ id: 11, userId: 1, activeStep: 'account', roleVariant: 'beneficiary', completionStatus: 'draft', account: { role: 'beneficiary' }, kyc: {}, finance: {} })),
+    getOnboardingDraft: jest.fn(async () => ({ id: 11, userId: 1, activeStep: 'account', roleVariant: 'beneficiary', completionStatus: 'draft', account: { role: 'beneficiary' }, kyc: {}, finance: {}, notificationSummary: { tone: 'neutral', title: 'Draft', message: 'Continue.' }, reviewSummary: { reviewState: 'draft', uploadedCount: 0, approvedCount: 0, reviewNotes: [] } })),
+    getOnboardingReviewQueue: jest.fn(async () => ([{ id: 11, userId: 1, roleVariant: 'beneficiary', activeStep: 'kyc', completionStatus: 'review_in_progress', reviewSummary: { reviewState: 'under_review', uploadedCount: 2, approvedCount: 1, reviewNotes: [] }, notificationSummary: { tone: 'info', title: 'In review', message: 'Awaiting admin decision.' }, profile: { email: 'ada@example.com' } }])),
     updateOnboardingDraft: jest.fn(async (_id: number, dto: any) => ({ id: 11, userId: 1, ...dto })),
     reviewOnboardingKyc: jest.fn(async (_id: number, dto: any) => ({ id: 11, userId: 1, reviewSummary: { reviewState: dto.status }, kyc: { [`${dto.target}Meta`]: { validationStatus: dto.status } } })),
   };
@@ -44,6 +45,12 @@ describe('Users onboarding draft (e2e)', () => {
   it('gets onboarding draft', async () => {
     const response = await request(app.getHttpServer()).get('/api/users/onboarding-draft').expect(200);
     expect(response.body.roleVariant).toBe('beneficiary');
+  });
+
+  it('gets onboarding review queue as admin', async () => {
+    const response = await request(app.getHttpServer()).get('/api/users/onboarding-review-queue').expect(200);
+    expect(response.body[0].reviewSummary.reviewState).toBe('under_review');
+    expect(usersService.getOnboardingReviewQueue).toHaveBeenCalled();
   });
 
   it('updates onboarding draft', async () => {

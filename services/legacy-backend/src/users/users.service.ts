@@ -64,7 +64,38 @@ export class UsersService {
       draft = await this.onboardingDraftRepository.save(draft);
     }
 
-    return this.decorateDraft(draft);
+    return this.decorateDraft(draft, user);
+  }
+
+  async getOnboardingReviewQueue() {
+    const drafts = await this.onboardingDraftRepository.find({ order: { updatedAt: 'DESC' } });
+    const userIds = drafts.map((draft) => draft.userId);
+    const users = userIds.length ? await this.usersRepository.findByIds(userIds as any) : [];
+    const userMap = new Map(users.map((user) => [user.id, user]));
+
+    return drafts.map((draft) => {
+      const user = userMap.get(draft.userId);
+      const decorated = this.decorateDraft(draft, user || undefined);
+      return {
+        id: decorated.id,
+        userId: decorated.userId,
+        roleVariant: decorated.roleVariant,
+        completionStatus: decorated.completionStatus,
+        activeStep: decorated.activeStep,
+        updatedAt: decorated.updatedAt,
+        reviewSummary: decorated.reviewSummary,
+        notificationSummary: decorated.notificationSummary,
+        profile: user
+          ? {
+              email: user.email,
+              role: user.role,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              walletAddress: user.walletAddress,
+            }
+          : null,
+      };
+    });
   }
 
   async updateOnboardingDraft(userId: number, dto: UpdateOnboardingDraftDto) {
@@ -83,10 +114,12 @@ export class UsersService {
     if (dto.finance) draft.finance = { ...(draft.finance || {}), ...dto.finance };
 
     const saved = await this.onboardingDraftRepository.save(draft);
-    return this.decorateDraft(saved);
+    return this.decorateDraft(saved, user);
   }
 
   async reviewOnboardingKyc(userId: number, dto: ReviewKycDocumentDto, reviewerRole: string) {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
     const existingDraft = await this.getOnboardingDraft(userId);
     const draft = await this.onboardingDraftRepository.findOne({ where: { id: existingDraft.id } });
     if (!draft) throw new NotFoundException('Onboarding draft not found');
@@ -112,7 +145,7 @@ export class UsersService {
         reviewedAt: new Date().toISOString(),
       },
       reviewNotes: Array.from(reviewNotes),
-    };
+    } as any;
 
     const statuses = [kyc.governmentIdMeta?.validationStatus, kyc.proofOfAddressMeta?.validationStatus, kyc.businessVerificationMeta?.validationStatus].filter(Boolean);
     const allRelevantApproved = draft.roleVariant === 'beneficiary'
@@ -122,16 +155,21 @@ export class UsersService {
     if (allRelevantApproved) {
       kyc.reviewState = 'approved';
       draft.completionStatus = 'review_approved';
+      reviewNotes.add('All required onboarding documents approved.');
     } else if (statuses.includes('rejected')) {
       kyc.reviewState = 'rejected';
       draft.completionStatus = 'review_changes_required';
+      reviewNotes.add('Changes required before onboarding can continue.');
     } else if (statuses.includes('under_review')) {
       kyc.reviewState = 'under_review';
+      draft.completionStatus = 'review_in_progress';
+      reviewNotes.add('Review is currently in progress.');
     }
 
+    kyc.reviewNotes = Array.from(reviewNotes);
     draft.kyc = kyc;
     const saved = await this.onboardingDraftRepository.save(draft);
-    return this.decorateDraft(saved);
+    return this.decorateDraft(saved, user);
   }
 
   private normalizeKycPayload(kyc: Record<string, any>, roleVariant?: string) {
@@ -171,18 +209,60 @@ export class UsersService {
     return updated;
   }
 
-  private decorateDraft(draft: OnboardingDraft) {
+  private decorateDraft(draft: OnboardingDraft, user?: User) {
     const kyc = draft.kyc || {};
     const statuses = [kyc.governmentIdMeta?.validationStatus, kyc.proofOfAddressMeta?.validationStatus, kyc.businessVerificationMeta?.validationStatus].filter(Boolean);
     const approvedCount = statuses.filter((status) => status === 'approved').length;
     return {
       ...draft,
+      notificationSummary: this.getNotificationSummary(draft, user),
       reviewSummary: {
         reviewState: kyc.reviewState || 'draft',
         approvedCount,
         uploadedCount: [kyc.governmentIdFileName, kyc.proofOfAddressFileName, kyc.businessVerificationFileName].filter(Boolean).length,
         reviewNotes: kyc.reviewNotes || [],
       },
+    };
+  }
+
+  private getNotificationSummary(draft: OnboardingDraft, user?: User) {
+    const kyc = draft.kyc || {};
+    const roleVariant = draft.roleVariant || user?.role || 'beneficiary';
+    if (kyc.reviewState === 'approved') {
+      return {
+        tone: 'success',
+        title: 'Onboarding review approved',
+        message:
+          roleVariant === 'merchant'
+            ? 'Your onboarding review is approved. Continue toward registry and settlement readiness.'
+            : roleVariant === 'sponsor'
+              ? 'Your onboarding review is approved. Continue toward funding and governance readiness.'
+              : 'Your onboarding review is approved. Continue toward pass and product access readiness.',
+      };
+    }
+    if (kyc.reviewState === 'rejected') {
+      return {
+        tone: 'warning',
+        title: 'Changes required on your onboarding draft',
+        message:
+          roleVariant === 'merchant'
+            ? 'Update your merchant verification materials and return to review.'
+            : roleVariant === 'sponsor'
+              ? 'Update your sponsor verification materials and return to review.'
+              : 'Update your identity documents and return to review.',
+      };
+    }
+    if (kyc.reviewState === 'under_review' || draft.completionStatus === 'review_in_progress') {
+      return {
+        tone: 'info',
+        title: 'Onboarding review in progress',
+        message: 'Your draft is currently under admin review. Watch the review dashboard for updates.',
+      };
+    }
+    return {
+      tone: 'neutral',
+      title: 'Onboarding draft in progress',
+      message: 'Complete required details and upload the remaining materials to move forward.',
     };
   }
 
