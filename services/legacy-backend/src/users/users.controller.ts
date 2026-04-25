@@ -32,6 +32,13 @@ export class UsersController {
     return this.usersService.updateOnboardingDraft(Number(req.user.sub), dto);
   }
 
+  @Get('onboarding-review-queue')
+  @UseGuards(RolesGuard)
+  @Roles('admin', 'super_admin')
+  async getOnboardingReviewQueue() {
+    return this.usersService.getOnboardingReviewQueue();
+  }
+
   @Put(':userId/onboarding-draft/review')
   @UseGuards(RolesGuard)
   @Roles('admin', 'super_admin')
