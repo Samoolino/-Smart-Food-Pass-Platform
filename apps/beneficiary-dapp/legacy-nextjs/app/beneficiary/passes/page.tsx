@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { RoleNavigation } from '../../../components/role-navigation';
+import { api } from '../../../lib/api';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001/api';
 
 export default function BeneficiaryPassesPage() {
   const [passes, setPasses] = useState<any[]>([]);
+  const [onboardingSignal, setOnboardingSignal] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -15,10 +17,13 @@ export default function BeneficiaryPassesPage() {
       try {
         setLoading(true);
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_BASE_URL}/passes`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-          cache: 'no-store',
-        });
+        const [response, onboardingDraft] = await Promise.all([
+          fetch(`${API_BASE_URL}/passes`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            cache: 'no-store',
+          }),
+          api.getOnboardingDraft(),
+        ]);
 
         const body = await response.json();
         if (!response.ok) {
@@ -26,6 +31,7 @@ export default function BeneficiaryPassesPage() {
         }
 
         setPasses(body);
+        setOnboardingSignal((onboardingDraft as any)?.notificationSummary || null);
       } catch (err: any) {
         setError(err.message || 'Failed to load beneficiary passes');
       } finally {
@@ -36,6 +42,13 @@ export default function BeneficiaryPassesPage() {
     load();
   }, []);
 
+  const toneStyles: Record<string, string> = {
+    success: 'border-emerald-200 bg-emerald-50 text-emerald-900',
+    warning: 'border-amber-200 bg-amber-50 text-amber-900',
+    info: 'border-cyan-200 bg-cyan-50 text-cyan-900',
+    neutral: 'border-slate-200 bg-slate-50 text-slate-900',
+  };
+
   return (
     <main className="min-h-screen bg-amber-50 px-6 py-8">
       <div className="max-w-6xl mx-auto">
@@ -45,6 +58,13 @@ export default function BeneficiaryPassesPage() {
           <p className="text-amber-700 font-medium">Beneficiary access</p>
           <h1 className="text-3xl font-bold text-slate-900">My passes</h1>
         </div>
+
+        {onboardingSignal && !loading && !error && (
+          <div className={`rounded-2xl border p-5 mb-6 ${toneStyles[onboardingSignal.tone] || toneStyles.neutral}`}>
+            <p className="font-semibold mb-1">{onboardingSignal.title}</p>
+            <p className="text-sm leading-7">{onboardingSignal.message}</p>
+          </div>
+        )}
 
         {loading && <div className="bg-white rounded-2xl p-6 shadow-sm">Loading passes...</div>}
         {error && <div className="bg-red-50 text-red-700 rounded-xl p-4">{error}</div>}
