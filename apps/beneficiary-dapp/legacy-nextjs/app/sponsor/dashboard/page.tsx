@@ -21,6 +21,7 @@ export default function SponsorDashboardPage() {
   const [metrics, setMetrics] = useState<SponsorMetrics | null>(null);
   const [passes, setPasses] = useState<any[]>([]);
   const [redemptions, setRedemptions] = useState<any[]>([]);
+  const [onboardingSignal, setOnboardingSignal] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -29,14 +30,16 @@ export default function SponsorDashboardPage() {
       try {
         setLoading(true);
         setError('');
-        const [dashboard, passList, redemptionList] = await Promise.all([
+        const [dashboard, passList, redemptionList, onboardingDraft] = await Promise.all([
           api.getSponsorDashboard(),
           api.getSponsorPasses(),
           api.getSponsorRedemptions(),
+          api.getOnboardingDraft(),
         ]);
         setMetrics(dashboard as SponsorMetrics);
         setPasses(passList as any[]);
         setRedemptions(redemptionList as any[]);
+        setOnboardingSignal((onboardingDraft as any)?.notificationSummary || null);
       } catch (err: any) {
         setError(err.message || 'Failed to load sponsor dashboard');
       } finally {
@@ -59,6 +62,13 @@ export default function SponsorDashboardPage() {
     ];
   }, [metrics]);
 
+  const toneStyles: Record<string, string> = {
+    success: 'border-emerald-200 bg-emerald-50 text-emerald-900',
+    warning: 'border-amber-200 bg-amber-50 text-amber-900',
+    info: 'border-cyan-200 bg-cyan-50 text-cyan-900',
+    neutral: 'border-slate-200 bg-slate-50 text-slate-900',
+  };
+
   return (
     <main className="min-h-screen bg-slate-100 px-6 py-8">
       <div className="max-w-7xl mx-auto">
@@ -71,6 +81,12 @@ export default function SponsorDashboardPage() {
 
         {loading && <div className="bg-white rounded-xl p-6 shadow-sm">Loading sponsor dashboard...</div>}
         {error && <div className="bg-red-50 text-red-700 rounded-xl p-4 mb-6">{error}</div>}
+        {onboardingSignal && !loading && !error && (
+          <div className={`rounded-2xl border p-5 mb-6 ${toneStyles[onboardingSignal.tone] || toneStyles.neutral}`}>
+            <p className="font-semibold mb-1">{onboardingSignal.title}</p>
+            <p className="text-sm leading-7">{onboardingSignal.message}</p>
+          </div>
+        )}
 
         {!loading && !error && (
           <>
