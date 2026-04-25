@@ -12,14 +12,19 @@ export default function MerchantRedeemPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [receipt, setReceipt] = useState<any | null>(null);
+  const [onboardingSignal, setOnboardingSignal] = useState<any | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const loadTransactions = async () => {
       try {
-        const data = await api.getMerchantTransactions();
-        setTransactions(data as any[]);
+        const [txData, onboardingDraft] = await Promise.all([
+          api.getMerchantTransactions(),
+          api.getOnboardingDraft(),
+        ]);
+        setTransactions(txData as any[]);
+        setOnboardingSignal((onboardingDraft as any)?.notificationSummary || null);
       } catch {
         // leave merchant history empty on first load
       }
@@ -75,6 +80,13 @@ export default function MerchantRedeemPage() {
     );
   };
 
+  const toneStyles: Record<string, string> = {
+    success: 'border-emerald-200 bg-emerald-50 text-emerald-900',
+    warning: 'border-amber-200 bg-amber-50 text-amber-900',
+    info: 'border-cyan-200 bg-cyan-50 text-cyan-900',
+    neutral: 'border-slate-200 bg-slate-50 text-slate-900',
+  };
+
   return (
     <main className="min-h-screen bg-emerald-50 px-6 py-8">
       <div className="max-w-7xl mx-auto">
@@ -84,6 +96,13 @@ export default function MerchantRedeemPage() {
           <p className="text-emerald-700 font-medium">Merchant operations</p>
           <h1 className="text-3xl font-bold text-slate-900">Redeem pass</h1>
         </div>
+
+        {onboardingSignal && (
+          <div className={`rounded-2xl border p-5 mb-6 ${toneStyles[onboardingSignal.tone] || toneStyles.neutral}`}>
+            <p className="font-semibold mb-1">{onboardingSignal.title}</p>
+            <p className="text-sm leading-7">{onboardingSignal.message}</p>
+          </div>
+        )}
 
         {error && <div className="bg-red-50 text-red-700 rounded-xl p-4 mb-6">{error}</div>}
 
