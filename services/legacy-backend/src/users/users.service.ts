@@ -213,21 +213,47 @@ export class UsersService {
     const kyc = draft.kyc || {};
     const statuses = [kyc.governmentIdMeta?.validationStatus, kyc.proofOfAddressMeta?.validationStatus, kyc.businessVerificationMeta?.validationStatus].filter(Boolean);
     const approvedCount = statuses.filter((status) => status === 'approved').length;
+    const nextReviewTarget = this.getNextReviewTarget(draft);
     return {
       ...draft,
-      notificationSummary: this.getNotificationSummary(draft, user),
+      notificationSummary: this.getNotificationSummary(draft, user, nextReviewTarget),
       reviewSummary: {
         reviewState: kyc.reviewState || 'draft',
         approvedCount,
         uploadedCount: [kyc.governmentIdFileName, kyc.proofOfAddressFileName, kyc.businessVerificationFileName].filter(Boolean).length,
         reviewNotes: kyc.reviewNotes || [],
+        nextReviewTarget,
       },
     };
   }
 
-  private getNotificationSummary(draft: OnboardingDraft, user?: User) {
+  private getNextReviewTarget(draft: OnboardingDraft): 'governmentId' | 'proofOfAddress' | 'businessVerification' {
+    const kyc = draft.kyc || {};
+    const targets: Array<{ target: 'governmentId' | 'proofOfAddress' | 'businessVerification'; fileName?: string; status?: string; required: boolean }> = [
+      { target: 'governmentId', fileName: kyc.governmentIdFileName, status: kyc.governmentIdMeta?.validationStatus, required: true },
+      { target: 'proofOfAddress', fileName: kyc.proofOfAddressFileName, status: kyc.proofOfAddressMeta?.validationStatus, required: true },
+      { target: 'businessVerification', fileName: kyc.businessVerificationFileName, status: kyc.businessVerificationMeta?.validationStatus, required: draft.roleVariant !== 'beneficiary' },
+    ];
+
+    const priority = targets.find((item) => item.required && !item.fileName)
+      || targets.find((item) => item.required && item.status === 'rejected')
+      || targets.find((item) => item.required && !item.status)
+      || targets.find((item) => item.required && item.status === 'uploaded')
+      || targets.find((item) => item.required && item.status === 'under_review')
+      || targets.find((item) => item.required && item.status !== 'approved')
+      || targets[0];
+
+    return priority.target;
+  }
+
+  private getNotificationSummary(draft: OnboardingDraft, user: User | undefined, nextReviewTarget: 'governmentId' | 'proofOfAddress' | 'businessVerification') {
     const kyc = draft.kyc || {};
     const roleVariant = draft.roleVariant || user?.role || 'beneficiary';
+    const correctionStep = nextReviewTarget === 'businessVerification' ? 'kyc' : 'kyc';
+    const correctionHref = `/onboarding?step=${correctionStep}&focus=${nextReviewTarget}`;
+    const reviewHref = `/onboarding/review?focus=${nextReviewTarget}`;
+    const accessHref = '/onboarding?step=access';
+
     if (kyc.reviewState === 'approved') {
       return {
         tone: 'success',
@@ -238,6 +264,8 @@ export class UsersService {
             : roleVariant === 'sponsor'
               ? 'Your onboarding review is approved. Continue toward funding and governance readiness.'
               : 'Your onboarding review is approved. Continue toward pass and product access readiness.',
+        actionLabel: 'Continue to access setup',
+        actionHref: accessHref,
       };
     }
     if (kyc.reviewState === 'rejected') {
@@ -250,6 +278,8 @@ export class UsersService {
             : roleVariant === 'sponsor'
               ? 'Update your sponsor verification materials and return to review.'
               : 'Update your identity documents and return to review.',
+        actionLabel: 'Fix required document',
+        actionHref: correctionHref,
       };
     }
     if (kyc.reviewState === 'under_review' || draft.completionStatus === 'review_in_progress') {
@@ -257,12 +287,16 @@ export class UsersService {
         tone: 'info',
         title: 'Onboarding review in progress',
         message: 'Your draft is currently under admin review. Watch the review dashboard for updates.',
+        actionLabel: 'Open focused review',
+        actionHref: reviewHref,
       };
     }
     return {
       tone: 'neutral',
       title: 'Onboarding draft in progress',
       message: 'Complete required details and upload the remaining materials to move forward.',
+      actionLabel: 'Continue required step',
+      actionHref: correctionHref,
     };
   }
 
