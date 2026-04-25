@@ -30,6 +30,7 @@ const roleVariantContent: Record<string, { title: string; bullets: string[] }> =
 
 type StepKey = (typeof steps)[number]['key'];
 type RoleVariant = 'beneficiary' | 'merchant' | 'sponsor';
+type NotificationSummary = { tone: 'success' | 'warning' | 'info' | 'neutral'; title: string; message: string } | null;
 type OnboardingState = {
   activeStep: StepKey;
   account: { fullName: string; email: string; phone: string; role: RoleVariant; security: string[] };
@@ -64,6 +65,7 @@ export default function OnboardingPage() {
   const [state, setState] = useState<OnboardingState>(initialState);
   const [hydrated, setHydrated] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'loading' | 'local' | 'synced' | 'syncing' | 'error'>('loading');
+  const [notificationSummary, setNotificationSummary] = useState<NotificationSummary>(null);
 
   useEffect(() => {
     const localState = readStoredState();
@@ -89,6 +91,7 @@ export default function OnboardingPage() {
           kyc: { ...current.kyc, ...(draft?.kyc || {}) },
           finance: { ...current.finance, walletAddress: draft?.finance?.walletAddress || profile?.walletAddress || current.finance.walletAddress, bankConnectionStatus: draft?.finance?.bankConnectionStatus || current.finance.bankConnectionStatus, cardConnectionStatus: draft?.finance?.cardConnectionStatus || current.finance.cardConnectionStatus, authorizationMode: draft?.finance?.authorizationMode || current.finance.authorizationMode },
         }));
+        setNotificationSummary(draft?.notificationSummary || null);
         setSyncStatus('synced');
       } catch {
         setSyncStatus('local');
@@ -108,8 +111,9 @@ export default function OnboardingPage() {
     const timeout = setTimeout(async () => {
       try {
         setSyncStatus((current) => (current === 'loading' ? 'loading' : 'syncing'));
-        await api.updateOnboardingDraft({ activeStep: state.activeStep, account: state.account, kyc: state.kyc, finance: state.finance, roleVariant: state.roleVariant, completionStatus: state.completionStatus });
+        const updatedDraft = await api.updateOnboardingDraft({ activeStep: state.activeStep, account: state.account, kyc: state.kyc, finance: state.finance, roleVariant: state.roleVariant, completionStatus: state.completionStatus });
         await api.updateProfile({ phone: state.account.phone || undefined, walletAddress: state.finance.walletAddress || undefined });
+        setNotificationSummary(updatedDraft?.notificationSummary || null);
         setSyncStatus('synced');
       } catch {
         setSyncStatus((current) => (current === 'loading' ? 'local' : 'error'));
@@ -139,6 +143,13 @@ export default function OnboardingPage() {
     access: state.kyc.consentChecked && financialLinksReady >= 1 ? 'Prepared' : 'Pending prerequisites',
   } as const;
 
+  const notificationToneStyles: Record<string, string> = {
+    success: 'border-emerald-200 bg-emerald-50 text-emerald-900',
+    warning: 'border-amber-200 bg-amber-50 text-amber-900',
+    info: 'border-cyan-200 bg-cyan-50 text-cyan-900',
+    neutral: 'border-slate-200 bg-slate-50 text-slate-900',
+  };
+
   return (
     <ProtectedRoute allowedRoles={['admin', 'super_admin', 'sponsor', 'merchant', 'beneficiary']}>
       <main className="min-h-screen bg-slate-100 px-6 py-8">
@@ -161,6 +172,13 @@ export default function OnboardingPage() {
               <Link href="/nutrition" className="rounded-full border border-emerald-300/30 bg-emerald-400/10 px-5 py-3 font-medium text-emerald-100 hover:bg-emerald-400/20">Open nutrition access lane</Link>
             </div>
           </section>
+
+          {notificationSummary && (
+            <section className={`rounded-2xl border p-5 mb-8 ${notificationToneStyles[notificationSummary.tone] || notificationToneStyles.neutral}`}>
+              <p className="text-sm font-semibold mb-1">{notificationSummary.title}</p>
+              <p className="text-sm leading-7">{notificationSummary.message}</p>
+            </section>
+          )}
 
           <section className="grid xl:grid-cols-[0.32fr_0.68fr] gap-6 mb-8">
             <div className="grid sm:grid-cols-2 xl:grid-cols-1 gap-3">
