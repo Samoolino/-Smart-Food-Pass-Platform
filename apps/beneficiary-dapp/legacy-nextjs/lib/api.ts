@@ -44,6 +44,7 @@ export const api = {
       body: JSON.stringify(payload),
     }),
   getOnboardingDraft: () => request('/users/onboarding-draft'),
+  getOnboardingReviewQueue: () => request('/users/onboarding-review-queue'),
   updateOnboardingDraft: (payload: Record<string, unknown>) =>
     request('/users/onboarding-draft', {
       method: 'PUT',
