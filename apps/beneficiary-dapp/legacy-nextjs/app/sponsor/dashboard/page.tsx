@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../../lib/api';
 import { RoleNavigation } from '../../../components/role-navigation';
@@ -85,6 +86,13 @@ export default function SponsorDashboardPage() {
           <div className={`rounded-2xl border p-5 mb-6 ${toneStyles[onboardingSignal.tone] || toneStyles.neutral}`}>
             <p className="font-semibold mb-1">{onboardingSignal.title}</p>
             <p className="text-sm leading-7">{onboardingSignal.message}</p>
+            {onboardingSignal.actionHref && onboardingSignal.actionLabel && (
+              <div className="mt-4">
+                <Link href={onboardingSignal.actionHref} className="inline-flex rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white">
+                  {onboardingSignal.actionLabel}
+                </Link>
+              </div>
+            )}
           </div>
         )}
 
