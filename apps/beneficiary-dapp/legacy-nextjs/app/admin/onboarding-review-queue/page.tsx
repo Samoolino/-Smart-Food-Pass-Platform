@@ -47,7 +47,7 @@ export default function AdminOnboardingReviewQueuePage() {
       setError('');
       setMessage('');
       for (const item of selected) {
-        const target = item.roleVariant === 'beneficiary' ? 'governmentId' : 'businessVerification';
+        const target = item.reviewSummary?.nextReviewTarget || 'governmentId';
         await api.reviewOnboardingKyc(item.userId, {
           target,
           status: bulkStatus,
@@ -130,6 +130,7 @@ export default function AdminOnboardingReviewQueuePage() {
                       <div>
                         <p className="font-semibold text-slate-900">{item.profile?.email || `User #${item.userId}`}</p>
                         <p className="text-sm text-slate-500 mt-1">Role: {item.roleVariant} · Step: {item.activeStep} · Status: {item.reviewSummary?.reviewState}</p>
+                        <p className="text-xs text-slate-400 mt-1">Next target: {item.reviewSummary?.nextReviewTarget || 'governmentId'}</p>
                       </div>
                     </div>
                     <div className="text-right">
@@ -141,7 +142,7 @@ export default function AdminOnboardingReviewQueuePage() {
                     <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-700">{item.notificationSummary.message}</div>
                   )}
                   <div className="flex flex-wrap gap-3 mt-4">
-                    <Link href="/onboarding/review" className="rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white">Open review dashboard</Link>
+                    <Link href={`/onboarding/review?focus=${item.reviewSummary?.nextReviewTarget || 'governmentId'}`} className="rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white">Open focused review</Link>
                   </div>
                 </div>
               ))}
