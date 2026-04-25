@@ -1,5 +1,6 @@
 'use client';
 
+import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { ProtectedRoute } from '../../../components/protected-route';
 import { RoleNavigation } from '../../../components/role-navigation';
@@ -24,6 +25,8 @@ const roleCards: Record<string, string[]> = {
 };
 
 export default function OnboardingReviewPage() {
+  const searchParams = useSearchParams();
+  const focusedKey = searchParams.get('focus');
   const [draft, setDraft] = useState<any | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [error, setError] = useState('');
@@ -78,6 +81,11 @@ export default function OnboardingReviewPage() {
             <p className="text-slate-300 max-w-4xl leading-8">See uploaded KYC metadata, validation states, and role-specific completion guidance for the current onboarding draft.</p>
           </section>
 
+          {focusedKey && (
+            <div className="rounded-xl border border-cyan-200 bg-cyan-50 text-cyan-900 p-4 mb-6 text-sm">
+              Focused item: {focusedKey}
+            </div>
+          )}
           {error && <div className="rounded-xl bg-red-50 text-red-700 p-4 mb-6">{error}</div>}
           {message && <div className="rounded-xl bg-emerald-50 text-emerald-700 p-4 mb-6">{message}</div>}
 
@@ -94,7 +102,7 @@ export default function OnboardingReviewPage() {
               <h2 className="text-2xl font-semibold text-slate-900 mb-4">Document review table</h2>
               <div className="space-y-4">
                 {fileRows.map((row) => (
-                  <div key={row.label} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div key={row.label} className={`rounded-2xl border p-4 ${focusedKey === row.key ? 'border-cyan-400 bg-cyan-50' : 'border-slate-200 bg-slate-50'}`}>
                     <div className="flex items-center justify-between gap-4 mb-2">
                       <p className="font-semibold text-slate-900">{row.label}</p>
                       <span className="rounded-full bg-cyan-100 text-cyan-700 px-3 py-1 text-xs font-medium">{row.meta?.validationStatus || 'pending'}</span>
