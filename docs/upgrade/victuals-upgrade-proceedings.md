@@ -20,54 +20,90 @@ Active refreshed migration branch:
 
 Status: active.
 
-Deliverables:
+Deliverables completed:
 
 - Root README rebrand and build-order update
 - VICTUALS glossary
 - Domain architecture
+- App state and transition plan
 - Food product registry source strategy
-- Shared domain model split by domain
 - Contract system specification
 - Repository component state audit
 
 ## Phase 2: Shared model expansion
 
+Status: started.
+
+Deliverables completed:
+
+- Split shared domain model into dedicated files for common primitives, subscription, pass, product, nutrition, merchant, redemption, ledger, and legacy DTOs.
+- Updated shared type package exports.
+
 Next deliverables:
 
-- Split shared domain model into dedicated files: subscription, pass, product, nutrition, merchant, redemption, ledger, compliance.
 - Add validation schemas using the selected runtime validation library.
 - Add test fixtures for common plan types and pass lifecycle states.
 
 ## Phase 3: Contract interface expansion
 
+Status: started.
+
+Deliverables completed:
+
+- Added VICTUALS shared contract data types for subscription plans, entitlement schedules, nutrition policy versions, redemption intents, and settlement batch anchors.
+- Added `ISubscriptionPlanRegistry`.
+- Added `IVictualsPassManager`.
+- Added `IEntitlementScheduler`.
+- Added `INutritionPolicyAnchor`.
+- Added `IRedemptionVerifier`.
+- Added `ISettlementAnchor`.
+
 Next deliverables:
 
-- Add Solidity interfaces for VICTUALS modules.
+- Add implementation contracts behind the new interfaces.
 - Preserve legacy Smart Food Pass contracts.
-- Add events and custom errors.
-- Add module-level tests before concrete implementation.
+- Add module-level tests before production implementation.
+- Add integration tests across plan, pass, schedule, nutrition policy, redemption, and settlement flows.
 
 ## Phase 4: Product registry and nutrition services
 
+Status: started.
+
+Deliverables completed:
+
+- Created product registry service scaffold.
+- Added source adapter interface.
+- Created Nutritional Intelligence Service scaffold.
+- Added eligibility rule interface.
+
 Next deliverables:
 
-- Create product registry service scaffold.
-- Add source adapter interface.
 - Add adapters for regional baseline, merchant inventory, and open barcode enrichment.
 - Add source confidence scoring.
 - Add product eligibility state machine.
 
 ## Phase 5: Wallet, QR, and merchant redemption
 
+Status: started.
+
+Deliverables completed:
+
+- Created wallet service scaffold.
+- Added entitlement scheduler interface.
+- Created settlement service scaffold.
+- Added settlement batch model.
+- Created merchant accreditation service scaffold.
+- Added merchant accreditation workflow interface.
+
 Next deliverables:
 
-- Add pass wallet service.
-- Add scheduled entitlement credit logic.
 - Add signed redemption intent service.
 - Add merchant validation and redemption acceptance flow.
 - Add ledger entries for pass debit and merchant credit.
 
 ## Phase 6: Apps
+
+Status: deferred.
 
 App work begins only after stable shared types, service contracts, and contract specs exist.
 
