@@ -4,7 +4,13 @@ pragma solidity ^0.8.24;
 import {DataTypes} from "../libraries/DataTypes.sol";
 
 interface IRedemptionVerifier {
-    event RedemptionIntentRegistered(bytes32 indexed redemptionId, bytes32 indexed passId, bytes32 indexed merchantId);
+    event RedemptionIntentRegistered(
+        bytes32 indexed redemptionId,
+        bytes32 indexed primaryPassId,
+        bytes32 indexed merchantId,
+        bytes32 passSetHash,
+        bytes32 nutritionScopeHash
+    );
     event RedemptionIntentCaptured(bytes32 indexed redemptionId, uint256 amount);
     event RedemptionIntentVoided(bytes32 indexed redemptionId);
     event RedemptionNonceConsumed(bytes32 indexed nonce);
