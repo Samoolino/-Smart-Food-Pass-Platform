@@ -44,7 +44,7 @@ Next deliverables:
 - Add validation schemas using the selected runtime validation library.
 - Add test fixtures for common plan types and pass lifecycle states.
 
-## Phase 3: Contract interface expansion
+## Phase 3: Contract interface and implementation expansion
 
 Status: started.
 
@@ -57,12 +57,22 @@ Deliverables completed:
 - Added `INutritionPolicyAnchor`.
 - Added `IRedemptionVerifier`.
 - Added `ISettlementAnchor`.
+- Implemented `SubscriptionPlanRegistry`.
+- Implemented `VictualsPassManager`.
+- Added unit tests for `SubscriptionPlanRegistry`.
+- Added unit tests for `VictualsPassManager`.
+
+Implementation logic clarified:
+
+- `SubscriptionPlanRegistry` owns plan template state, activation, suspension, closure, metadata hash updates, and issuance counting.
+- `VictualsPassManager` owns pass issuance, activation, suspension, expiry, reserved value, captured value, released value, and available value calculation.
+- These contracts only store state and enforce lifecycle boundaries. Product scoring, identity review, merchant price validation, and provider integrations remain off-chain.
 
 Next deliverables:
 
-- Add implementation contracts behind the new interfaces.
-- Preserve legacy Smart Food Pass contracts.
-- Add module-level tests before production implementation.
+- Implement `EntitlementScheduler`.
+- Implement `NutritionPolicyAnchor`.
+- Add module-level tests before production deployment.
 - Add integration tests across plan, pass, schedule, nutrition policy, redemption, and settlement flows.
 
 ## Phase 4: Product registry and nutrition services
