@@ -165,9 +165,11 @@ library DataTypes {
 
     struct RedemptionIntent {
         bytes32 redemptionId;
-        bytes32 passId;
+        bytes32 primaryPassId;
         bytes32 merchantId;
         bytes32 basketHash;
+        bytes32 passSetHash;
+        bytes32 nutritionScopeHash;
         uint256 valueLimit;
         uint256 expiresAt;
         bytes32 nonce;
