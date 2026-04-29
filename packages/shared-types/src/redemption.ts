@@ -8,9 +8,19 @@ export interface RedemptionBasketItem {
   eligibilityTags: string[];
 }
 
+export interface CombinedPassScope {
+  holderRef: string;
+  passIds: string[];
+  planIds: string[];
+  nutritionGoalTags: string[];
+  passSetHash: string;
+  nutritionScopeHash: string;
+}
+
 export interface RedemptionIntent {
   redemptionId: string;
-  passId: string;
+  primaryPassId: string;
+  combinedScope?: CombinedPassScope;
   merchantId?: string;
   basketHash: string;
   valueLimit: MoneyAmount;
