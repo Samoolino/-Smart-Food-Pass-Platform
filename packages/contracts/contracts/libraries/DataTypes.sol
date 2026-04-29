@@ -37,6 +37,22 @@ library DataTypes {
         CUSTOM
     }
 
+    enum PlanStatus {
+        NONE,
+        DRAFT,
+        ACTIVE,
+        SUSPENDED,
+        CLOSED
+    }
+
+    enum SettlementStatus {
+        NONE,
+        CREATED,
+        READY,
+        SETTLED,
+        FAILED
+    }
+
     struct PassConfig {
         bytes32 passId;
         address beneficiary;
@@ -108,5 +124,63 @@ library DataTypes {
         CadenceType cadenceType;
         bool allowPartialRedemption;
         bool active;
+    }
+
+    struct SubscriptionPlan {
+        bytes32 planId;
+        bytes32 planMetadataHash;
+        address purchaser;
+        uint256 fundingValue;
+        uint256 creditAmount;
+        uint256 creditIntervalDays;
+        uint256 validityDays;
+        uint256 carryoverDays;
+        uint256 maxIssuablePasses;
+        uint256 issuedPasses;
+        PlanStatus status;
+        uint256 createdAt;
+        uint256 updatedAt;
+    }
+
+    struct EntitlementSchedule {
+        bytes32 passId;
+        bytes32 planId;
+        uint256 creditAmount;
+        uint256 creditIntervalDays;
+        uint256 nextCreditAt;
+        uint256 expiresAt;
+        uint256 carryoverDays;
+        bool active;
+    }
+
+    struct NutritionPolicyVersion {
+        bytes32 policyId;
+        bytes32 versionHash;
+        uint256 categoryMask;
+        uint256 effectiveFrom;
+        uint256 effectiveTo;
+        bool active;
+        uint256 lastUpdatedAt;
+    }
+
+    struct RedemptionIntent {
+        bytes32 redemptionId;
+        bytes32 passId;
+        bytes32 merchantId;
+        bytes32 basketHash;
+        uint256 valueLimit;
+        uint256 expiresAt;
+        bytes32 nonce;
+        RedemptionStatus status;
+    }
+
+    struct SettlementBatchAnchor {
+        bytes32 batchId;
+        bytes32 merchantId;
+        bytes32 ledgerRootHash;
+        uint256 totalAmount;
+        SettlementStatus status;
+        uint256 createdAt;
+        uint256 updatedAt;
     }
 }
