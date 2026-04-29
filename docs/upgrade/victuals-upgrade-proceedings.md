@@ -59,19 +59,25 @@ Deliverables completed:
 - Added `ISettlementAnchor`.
 - Implemented `SubscriptionPlanRegistry`.
 - Implemented `VictualsPassManager`.
+- Implemented `EntitlementScheduler`.
+- Implemented `NutritionPolicyAnchor`.
 - Added unit tests for `SubscriptionPlanRegistry`.
 - Added unit tests for `VictualsPassManager`.
+- Added unit tests for `EntitlementScheduler`.
+- Added unit tests for `NutritionPolicyAnchor`.
 
 Implementation logic clarified:
 
 - `SubscriptionPlanRegistry` owns plan template state, activation, suspension, closure, metadata hash updates, and issuance counting.
 - `VictualsPassManager` owns pass issuance, activation, suspension, expiry, reserved value, captured value, released value, and available value calculation.
+- `EntitlementScheduler` owns pass credit timing, next-credit checkpoints, credit anchoring, schedule disabling, and credit-due checks.
+- `NutritionPolicyAnchor` owns nutrition policy version hashes, effective windows, active state, and validation.
 - These contracts only store state and enforce lifecycle boundaries. Product scoring, identity review, merchant price validation, and provider integrations remain off-chain.
 
 Next deliverables:
 
-- Implement `EntitlementScheduler`.
-- Implement `NutritionPolicyAnchor`.
+- Implement `RedemptionVerifier`.
+- Implement `SettlementAnchor`.
 - Add module-level tests before production deployment.
 - Add integration tests across plan, pass, schedule, nutrition policy, redemption, and settlement flows.
 
