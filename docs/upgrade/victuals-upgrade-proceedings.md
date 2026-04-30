@@ -26,9 +26,11 @@ Deliverables completed:
 - VICTUALS glossary
 - Domain architecture
 - App state and transition plan
+- Frontend and engine transition plan
 - Food product registry source strategy
 - Contract system specification
 - Repository component state audit
+- Network strategy for testnet and mainnet selection
 
 ## Phase 2: Shared model expansion
 
@@ -47,7 +49,7 @@ Next deliverables:
 
 ## Phase 3: Contract interface and implementation expansion
 
-Status: integration-test stage.
+Status: deployment-readiness stage.
 
 Deliverables completed:
 
@@ -72,6 +74,10 @@ Deliverables completed:
 - Added unit tests for `SettlementAnchor`.
 - Added integration test `VictualsLifecycleIntegrationTest` connecting plan/package, pass issuance, entitlement schedule, nutrition policy anchor, combined redemption intent, pass value capture, and settlement batch anchoring.
 - Removed duplicate treasury-path `SettlementAnchor`; canonical contract path is now `packages/contracts/contracts/settlement/SettlementAnchor.sol`.
+- Added contract CI workflow for Foundry tests.
+- Updated local and testnet deployment scripts for the VICTUALS module set.
+- Added mainnet deployment script for the VICTUALS module set.
+- Added root and package-level deployment commands for local, testnet, and mainnet deployments.
 
 Implementation logic clarified:
 
@@ -87,8 +93,8 @@ Implementation logic clarified:
 
 Next deliverables:
 
-- Run Foundry/Hardhat tests in CI or local environment.
-- Add deployment script updates for the new VICTUALS modules.
+- Run Foundry tests in CI or local environment.
+- Decide the pilot mainnet after Amoy/public-testnet validation.
 - Add service-level redemption orchestration after contract integration tests are stable.
 
 ## Phase 4: Product registry and nutrition services
@@ -140,6 +146,14 @@ Target apps:
 - Merchant app
 - Admin console
 - Funder portal
+
+Required UX changes:
+
+- Replace Smart Food Pass language with VICTUALS language.
+- Show location-aware market and merchant availability.
+- Show currency-aware plan values, wallet values, basket values, and settlement values.
+- Show all active passes for a user and the combined nutritional scope available for redemption.
+- Connect apps through service engines rather than raw product decisions directly on-chain.
 
 ## Execution rule
 
