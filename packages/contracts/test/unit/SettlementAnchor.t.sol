@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {Test} from "forge-std/Test.sol";
-import {SettlementAnchor} from "../../contracts/treasury/SettlementAnchor.sol";
+import {SettlementAnchor} from "../../contracts/settlement/SettlementAnchor.sol";
 import {Roles} from "../../contracts/access/Roles.sol";
 import {DataTypes} from "../../contracts/libraries/DataTypes.sol";
 
