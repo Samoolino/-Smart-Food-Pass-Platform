@@ -38,6 +38,7 @@ Deliverables completed:
 
 - Split shared domain model into dedicated files for common primitives, subscription, pass, product, nutrition, merchant, redemption, ledger, and legacy DTOs.
 - Updated shared type package exports.
+- Added combined pass scope support in redemption types.
 
 Next deliverables:
 
@@ -61,10 +62,14 @@ Deliverables completed:
 - Implemented `VictualsPassManager`.
 - Implemented `EntitlementScheduler`.
 - Implemented `NutritionPolicyAnchor`.
+- Implemented `RedemptionVerifier`.
+- Implemented `SettlementAnchor`.
 - Added unit tests for `SubscriptionPlanRegistry`.
 - Added unit tests for `VictualsPassManager`.
 - Added unit tests for `EntitlementScheduler`.
 - Added unit tests for `NutritionPolicyAnchor`.
+- Added unit tests for `RedemptionVerifier`.
+- Added unit tests for `SettlementAnchor`.
 
 Implementation logic clarified:
 
@@ -72,14 +77,16 @@ Implementation logic clarified:
 - `VictualsPassManager` owns pass issuance, activation, suspension, expiry, reserved value, captured value, released value, and available value calculation.
 - `EntitlementScheduler` owns pass credit timing, next-credit checkpoints, credit anchoring, schedule disabling, and credit-due checks.
 - `NutritionPolicyAnchor` owns nutrition policy version hashes, effective windows, active state, and validation.
+- `RedemptionVerifier` owns redemption intent registration, nonce consumption, basket hash anchoring, combined pass scope anchoring, nutrition scope anchoring, capture, voiding, and validation.
+- `SettlementAnchor` owns merchant settlement batch hash anchoring, ready state, settled state, failed state, and lookup.
+- A single authenticated user may hold multiple active passes. The combined redemption scope is represented by `passSetHash` and `nutritionScopeHash` so off-chain services can evaluate multiple plans and nutrition goals while contracts anchor the approved scope efficiently.
 - These contracts only store state and enforce lifecycle boundaries. Product scoring, identity review, merchant price validation, and provider integrations remain off-chain.
 
 Next deliverables:
 
-- Implement `RedemptionVerifier`.
-- Implement `SettlementAnchor`.
-- Add module-level tests before production deployment.
 - Add integration tests across plan, pass, schedule, nutrition policy, redemption, and settlement flows.
+- Add deployment script updates for the new VICTUALS modules.
+- Add service-level redemption orchestration after contract integration tests are stable.
 
 ## Phase 4: Product registry and nutrition services
 
