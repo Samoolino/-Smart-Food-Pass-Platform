@@ -47,7 +47,7 @@ Next deliverables:
 
 ## Phase 3: Contract interface and implementation expansion
 
-Status: started.
+Status: integration-test stage.
 
 Deliverables completed:
 
@@ -70,10 +70,13 @@ Deliverables completed:
 - Added unit tests for `NutritionPolicyAnchor`.
 - Added unit tests for `RedemptionVerifier`.
 - Added unit tests for `SettlementAnchor`.
+- Added integration test `VictualsLifecycleIntegrationTest` connecting plan/package, pass issuance, entitlement schedule, nutrition policy anchor, combined redemption intent, pass value capture, and settlement batch anchoring.
+- Removed duplicate treasury-path `SettlementAnchor`; canonical contract path is now `packages/contracts/contracts/settlement/SettlementAnchor.sol`.
 
 Implementation logic clarified:
 
 - `SubscriptionPlanRegistry` owns plan template state, activation, suspension, closure, metadata hash updates, and issuance counting.
+- Plan/package value should be determined from target product requirements and the nutritional matrix off-chain, then anchored by `planMetadataHash`, `fundingValue`, `creditAmount`, and schedule fields.
 - `VictualsPassManager` owns pass issuance, activation, suspension, expiry, reserved value, captured value, released value, and available value calculation.
 - `EntitlementScheduler` owns pass credit timing, next-credit checkpoints, credit anchoring, schedule disabling, and credit-due checks.
 - `NutritionPolicyAnchor` owns nutrition policy version hashes, effective windows, active state, and validation.
@@ -84,7 +87,7 @@ Implementation logic clarified:
 
 Next deliverables:
 
-- Add integration tests across plan, pass, schedule, nutrition policy, redemption, and settlement flows.
+- Run Foundry/Hardhat tests in CI or local environment.
 - Add deployment script updates for the new VICTUALS modules.
 - Add service-level redemption orchestration after contract integration tests are stable.
 
