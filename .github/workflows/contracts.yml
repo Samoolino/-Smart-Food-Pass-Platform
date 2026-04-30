@@ -37,6 +37,10 @@ jobs:
         with:
           version: stable
 
+      - name: Install forge-std library
+        working-directory: packages/contracts
+        run: forge install foundry-rs/forge-std --no-commit
+
       - name: Run forge tests
         working-directory: packages/contracts
         run: forge test -vvv
