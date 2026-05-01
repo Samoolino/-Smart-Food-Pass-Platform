@@ -1,5 +1,6 @@
 export * from './common';
 export * from './identity';
+export * from './accreditation';
 export * from './subscription';
 export * from './pass';
 export * from './nutrition';
