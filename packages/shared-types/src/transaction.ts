@@ -1,6 +1,6 @@
 import type { CurrencyCode, MoneyAmount } from './common';
 
-export type InAppCurrencyCode = 'WO';
+export type InAppCurrencyCode = '$WO';
 
 export type ExternalAssetType = 'FIAT' | 'STABLECOIN' | 'CRYPTO_ASSET' | 'BANK_TRANSFER' | 'CARD' | 'OTHER';
 
