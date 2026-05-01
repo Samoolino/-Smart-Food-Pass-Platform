@@ -1,5 +1,5 @@
 import type { MoneyAmount } from './common';
-import type { WoAmount } from './transaction';
+import type { WOAmount } from './transaction';
 
 export type TreasuryPolicyState =
   | 'DRAFT'
@@ -19,9 +19,9 @@ export interface TreasuryReservePolicy {
   policyId: string;
   policyVersionHash: string;
   lowerReserveLimit: MoneyAmount;
-  maximumWoSupply: WoAmount;
-  currentlyReleasedWo: WoAmount;
-  availableWoCapacity: WoAmount;
+  maximumWoSupply: WOAmount;
+  currentlyReleasedWo: WOAmount;
+  availableWoCapacity: WOAmount;
   state: TreasuryPolicyState;
   createdAt: string;
   updatedAt: string;
@@ -30,7 +30,7 @@ export interface TreasuryReservePolicy {
 export interface WoReleaseWindow {
   releaseId: string;
   policyId: string;
-  releaseAmount: WoAmount;
+  releaseAmount: WOAmount;
   backingReferenceHash: string;
   availableForPlanIssuance: boolean;
   state: WoReleaseState;
@@ -42,7 +42,7 @@ export interface TreasuryOperationRecord {
   operationId: string;
   policyId: string;
   operationReferenceHash: string;
-  resultingWoCapacity?: WoAmount;
+  resultingWoCapacity?: WOAmount;
   reviewRequired: boolean;
   createdAt: string;
 }
