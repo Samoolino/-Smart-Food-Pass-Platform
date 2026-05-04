@@ -27,8 +27,8 @@ const plans = [
 
 const contracts = [
   ['Subscription Plan Registry', 'Anchors package metadata, funding value, credit schedule, and plan status.'],
-  ['Victuals Pass Manager', 'Controls pass issue state, value reservation, capture, and available $WO balance.'],
-  ['Entitlement Scheduler', 'Anchors scheduled pass credits, validity windows, and credit timing.'],
+  ['Victuals Pass Manager', 'Controls pass issue state, value reservation, and available $WO balance.'],
+  ['Entitlement Scheduler', 'Anchors scheduled pass credits and validity windows.'],
   ['Nutrition Policy Anchor', 'Anchors nutrition matrix version hashes and target policy windows.'],
   ['Redemption Verifier', 'Anchors basket hash, pass set hash, nutrition scope hash, nonce, and capture state.'],
   ['Settlement Anchor', 'Anchors merchant settlement batch proof and settlement lifecycle.']
@@ -37,21 +37,6 @@ const contracts = [
 export default function HomePage() {
   return (
     <main className="page-shell">
-      <nav className="nav">
-        <div className="container nav-inner">
-          <a className="brand" href="#home">
-            <span className="brand-mark">V</span>
-            <span>VICTUALS</span>
-          </a>
-          <div className="nav-links">
-            <a href="#how">How it works</a>
-            <a href="#markets">Market stores</a>
-            <a href="#plans">Plans</a>
-            <a href="#contracts">Contracts</a>
-          </div>
-        </div>
-      </nav>
-
       <section id="home" className="hero">
         <div className="container hero-grid">
           <div>
@@ -63,9 +48,9 @@ export default function HomePage() {
               food access platform.
             </p>
             <div className="actions">
-              <a className="button primary" href="#markets">Explore market stores</a>
-              <a className="button gold" href="#plans">Start a package</a>
-              <a className="button secondary" href="#contracts">View contract overview</a>
+              <a className="button primary" href="/market-stores">Explore market stores</a>
+              <a className="button gold" href="/plans">Start a package</a>
+              <a className="button secondary" href="/contract-overview">View contract overview</a>
             </div>
           </div>
 
