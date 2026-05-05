@@ -1,0 +1,307 @@
+:root {
+  --victuals-forest: #12372a;
+  --victuals-leaf: #2e7d32;
+  --victuals-lime: #a3e635;
+  --victuals-gold: #f5b700;
+  --victuals-amber: #f59e0b;
+  --victuals-red: #dc2626;
+  --victuals-blue: #2563eb;
+  --victuals-cyan: #06b6d4;
+  --victuals-ink: #111827;
+  --victuals-slate: #475569;
+  --victuals-cloud: #f8fafc;
+  --victuals-card: #ffffff;
+  --victuals-border: #e5e7eb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--victuals-cloud);
+  color: var(--victuals-ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.page-shell {
+  min-height: 100vh;
+}
+
+.container {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+}
+
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(248, 250, 252, 0.92);
+  border-bottom: 1px solid var(--victuals-border);
+  backdrop-filter: blur(12px);
+}
+
+.nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 18px 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  color: var(--victuals-forest);
+}
+
+.brand-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 14px;
+  background: var(--victuals-forest);
+  color: var(--victuals-gold);
+}
+
+.nav-links {
+  display: flex;
+  gap: 18px;
+  color: var(--victuals-slate);
+  font-size: 14px;
+}
+
+.hero {
+  padding: 88px 0 56px;
+  background: radial-gradient(circle at top left, rgba(163, 230, 53, 0.22), transparent 34%), linear-gradient(135deg, #f8fafc 0%, #edf7ed 100%);
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1.08fr 0.92fr;
+  gap: 40px;
+  align-items: center;
+}
+
+.eyebrow {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 12px;
+  border: 1px solid rgba(18, 55, 42, 0.16);
+  border-radius: 999px;
+  color: var(--victuals-forest);
+  background: white;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+h1 {
+  margin: 20px 0 18px;
+  color: var(--victuals-forest);
+  font-size: clamp(42px, 6vw, 76px);
+  line-height: 0.94;
+  letter-spacing: -0.07em;
+}
+
+.hero-copy {
+  max-width: 680px;
+  color: var(--victuals-slate);
+  font-size: 18px;
+  line-height: 1.7;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 0 18px;
+  border-radius: 14px;
+  font-weight: 800;
+  border: 1px solid transparent;
+}
+
+.button.primary {
+  background: var(--victuals-forest);
+  color: white;
+}
+
+.button.gold {
+  background: var(--victuals-gold);
+  color: #1f2937;
+}
+
+.button.secondary {
+  background: white;
+  border-color: var(--victuals-border);
+  color: var(--victuals-ink);
+}
+
+.panel {
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid var(--victuals-border);
+  border-radius: 28px;
+  padding: 24px;
+  box-shadow: 0 22px 70px rgba(18, 55, 42, 0.13);
+}
+
+.value-card {
+  padding: 20px;
+  border-radius: 22px;
+  background: var(--victuals-forest);
+  color: white;
+}
+
+.value-card strong {
+  display: block;
+  color: var(--victuals-gold);
+  font-size: 38px;
+  letter-spacing: -0.06em;
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.metric {
+  padding: 14px;
+  border-radius: 18px;
+  background: white;
+  color: var(--victuals-ink);
+  border: 1px solid var(--victuals-border);
+}
+
+.metric span {
+  display: block;
+  color: var(--victuals-slate);
+  font-size: 12px;
+}
+
+.section {
+  padding: 72px 0;
+}
+
+.section-title {
+  max-width: 760px;
+  margin-bottom: 28px;
+}
+
+.section-title h2 {
+  margin: 0 0 12px;
+  color: var(--victuals-forest);
+  font-size: clamp(30px, 4vw, 48px);
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.section-title p {
+  margin: 0;
+  color: var(--victuals-slate);
+  line-height: 1.7;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.card {
+  background: var(--victuals-card);
+  border: 1px solid var(--victuals-border);
+  border-radius: 24px;
+  padding: 22px;
+  min-height: 190px;
+}
+
+.card h3 {
+  margin: 12px 0 8px;
+  color: var(--victuals-forest);
+}
+
+.card p {
+  color: var(--victuals-slate);
+  line-height: 1.6;
+}
+
+.tag {
+  display: inline-flex;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  background: #ecfdf5;
+  color: var(--victuals-leaf);
+}
+
+.tag.gold {
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.tag.blue {
+  background: #eff6ff;
+  color: var(--victuals-blue);
+}
+
+.store-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.store-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.proof-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.proof-card {
+  border-left: 5px solid var(--victuals-blue);
+}
+
+.footer {
+  padding: 40px 0;
+  background: var(--victuals-forest);
+  color: white;
+}
+
+@media (max-width: 860px) {
+  .hero-grid,
+  .card-grid,
+  .proof-list {
+    grid-template-columns: 1fr;
+  }
+
+  .nav-links {
+    display: none;
+  }
+}

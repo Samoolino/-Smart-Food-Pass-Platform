@@ -8,7 +8,8 @@
     "coverage": "forge coverage",
     "lint": "prettier --check .",
     "deploy:local": "forge script script/DeployLocal.s.sol:DeployLocalScript --rpc-url $RPC_URL_LOCAL --broadcast",
-    "deploy:testnet": "forge script script/DeployTestnet.s.sol:DeployTestnetScript --rpc-url $RPC_URL_TESTNET --broadcast --verify"
+    "deploy:testnet": "forge script script/DeployTestnet.s.sol:DeployTestnetScript --rpc-url $RPC_URL_TESTNET --broadcast --verify",
+    "deploy:mainnet": "forge script script/DeployMainnet.s.sol:DeployMainnetScript --rpc-url $RPC_URL_MAINNET --broadcast --verify"
   },
   "devDependencies": {
     "hardhat": "^3.0.0",
