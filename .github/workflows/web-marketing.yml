@@ -1,0 +1,46 @@
+name: Web Marketing
+
+on:
+  pull_request:
+    paths:
+      - 'apps/web-marketing/**'
+      - '.github/workflows/web-marketing.yml'
+      - 'pnpm-workspace.yaml'
+      - 'package.json'
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/web-marketing/**'
+      - '.github/workflows/web-marketing.yml'
+      - 'pnpm-workspace.yaml'
+      - 'package.json'
+
+jobs:
+  build:
+    name: Build web marketing app
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.0.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile=false
+
+      - name: Type check
+        run: pnpm --filter @victuals/web-marketing type-check
+
+      - name: Build
+        run: pnpm --filter @victuals/web-marketing build
