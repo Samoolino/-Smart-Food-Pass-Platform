@@ -9,7 +9,7 @@ import {NutritionPolicyAnchor} from "../contracts/policy/NutritionPolicyAnchor.s
 import {RedemptionVerifier} from "../contracts/redemption/RedemptionVerifier.sol";
 import {SettlementAnchor} from "../contracts/settlement/SettlementAnchor.sol";
 
-contract DeployTestnetScript is Script {
+contract DeployMainnetScript is Script {
     function run() external {
         address admin = vm.envAddress("VICTUALS_ADMIN");
         uint256 chainId = block.chainid;
@@ -25,7 +25,7 @@ contract DeployTestnetScript is Script {
 
         vm.stopBroadcast();
 
-        console2.log("VICTUALS network deployment chainId", chainId);
+        console2.log("VICTUALS mainnet deployment chainId", chainId);
         console2.log("VICTUALS admin", admin);
         console2.log("SubscriptionPlanRegistry", address(planRegistry));
         console2.log("VictualsPassManager", address(passManager));

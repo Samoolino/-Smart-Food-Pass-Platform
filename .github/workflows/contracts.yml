@@ -1,0 +1,46 @@
+name: Contracts
+
+on:
+  pull_request:
+    paths:
+      - 'packages/contracts/**'
+      - '.github/workflows/contracts.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/contracts/**'
+      - '.github/workflows/contracts.yml'
+
+jobs:
+  foundry:
+    name: Foundry tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile=false
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - name: Install forge-std library
+        working-directory: packages/contracts
+        run: forge install foundry-rs/forge-std --no-commit
+
+      - name: Run forge tests
+        working-directory: packages/contracts
+        run: forge test -vvv

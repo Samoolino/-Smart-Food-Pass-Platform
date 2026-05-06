@@ -11,6 +11,7 @@
     "contracts:coverage": "pnpm --filter @smart-food-stamp/contracts coverage",
     "contracts:deploy:local": "pnpm --filter @smart-food-stamp/contracts deploy:local",
     "contracts:deploy:testnet": "pnpm --filter @smart-food-stamp/contracts deploy:testnet",
+    "contracts:deploy:mainnet": "pnpm --filter @smart-food-stamp/contracts deploy:mainnet",
     "db:migrate": "turbo run db:migrate",
     "seed:products": "turbo run seed:products",
     "seed:merchants": "turbo run seed:merchants"
